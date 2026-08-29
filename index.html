@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gao Ran Racing - Stages & Particles</title>
+    <title>Gao Ran Racing - Scenery & Pro Physics</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap');
 
@@ -15,38 +15,38 @@
         }
 
         #game-wrapper {
-            position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 600px;
+            position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 800px;
             display: flex; flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); border-radius: 12px; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden;
         }
 
         #canvas-container {
             flex-grow: 1; position: relative; width: 100%;
-            background: #87CEEB; /* Akan ditimpa oleh canvas */
+            background: #87CEEB; 
         }
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* Kontrol Bawah */
+        /* Area Kontrol Jempol */
         #controls-container {
-            height: 100px; background: #2E7D32; border-top: 4px solid #1B5E20;
-            display: flex; justify-content: space-between; padding: 10px; gap: 10px;
+            height: 110px; background: #2E7D32; border-top: 5px solid #1B5E20;
+            display: flex; justify-content: space-between; padding: 12px; gap: 12px;
             z-index: 100;
         }
         
         .lane-btn {
             flex: 1; background: #4CAF50; border: 4px solid #81C784; border-radius: 15px;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white; font-weight: 900; font-size: 16px; cursor: pointer;
-            box-shadow: 0 6px 0 #1B5E20; transition: transform 0.1s, box-shadow 0.1s;
+            color: white; font-weight: 900; font-size: 18px; cursor: pointer;
+            box-shadow: 0 6px 0 #1B5E20; transition: transform 0.05s, box-shadow 0.05s;
         }
         
         .lane-btn:active, .lane-btn.active-touch {
             transform: translateY(6px); box-shadow: 0 0 0 #1B5E20; background: #66BB6A;
         }
 
-        .btn-emoji { font-size: 32px; line-height: 1; margin-bottom: 5px; }
+        .btn-emoji { font-size: 36px; line-height: 1; margin-bottom: 5px; }
 
-        /* HUD & Layar Game Over */
+        /* HUD & UI */
         .ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; display: flex; flex-direction: column;
@@ -55,34 +55,33 @@
         .hud { display: flex; justify-content: space-between; padding: 15px; pointer-events: auto; }
 
         .hud-box {
-            background: rgba(0, 0, 0, 0.6); color: #FFEB3B;
+            background: rgba(0, 0, 0, 0.5); color: #FFEB3B;
             padding: 8px 20px; border-radius: 20px; font-size: 22px; font-weight: 900;
-            border: 2px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px);
+            border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px);
         }
         
-        .hud-stage {
-            color: #fff; background: rgba(33, 150, 243, 0.7);
-        }
+        .hud-stage { color: #fff; background: rgba(33, 150, 243, 0.6); }
 
         .btn-sound {
-            background: rgba(0,0,0,0.6); color: white; border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.5); color: white; border: 2px solid rgba(255,255,255,0.2);
             width: 45px; height: 45px; border-radius: 50%; font-size: 20px; cursor: pointer;
         }
 
         .screen-center {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(0,0,0,0.7); pointer-events: auto; transition: opacity 0.3s; z-index: 50;
+            background: rgba(0,0,0,0.6); pointer-events: auto; transition: opacity 0.3s; z-index: 50;
+            backdrop-filter: blur(3px);
         }
 
         .hidden { opacity: 0; pointer-events: none; display: none !important; }
         
-        .title { color: white; font-size: 42px; text-shadow: 3px 3px 0 #000; text-align: center; font-weight: 900; }
-        .subtitle { color: #81C784; font-size: 16px; margin-bottom: 30px; margin-top: 10px; font-weight: 700; text-align: center;}
+        .title { color: white; font-size: 46px; text-shadow: 4px 4px 0 #2E7D32; text-align: center; font-weight: 900; line-height: 1.1; }
+        .subtitle { color: #fff; background: #FF9800; padding: 5px 15px; border-radius: 20px; font-size: 16px; margin: 20px 0 30px 0; font-weight: 700; text-align: center; border: 2px solid #fff;}
         
         .btn-play {
             background: linear-gradient(180deg, #FFCA28, #FF9800);
-            color: #3e2723; border: none; padding: 15px 50px; font-size: 28px;
+            color: #3e2723; border: 3px solid #fff; padding: 15px 60px; font-size: 30px;
             border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 900;
             box-shadow: 0 8px 0 #E65100; cursor: pointer; text-transform: uppercase;
         }
@@ -110,14 +109,14 @@
             </div>
 
             <div class="screen-center" id="ui-start">
-                <div class="title">GAO RAN<br>RACING</div>
-                <div class="subtitle">Setiap 60 koin akan naik Stage!<br>Tap tombol di bawah untuk melompat.</div>
+                <div class="title">GAO RAN<br>BERASTAGI</div>
+                <div class="subtitle">Tap tombol di bawah untuk melompat!</div>
                 <button class="btn-play" onclick="startGame()">MAIN</button>
             </div>
 
             <div class="screen-center hidden" id="ui-gameover">
-                <div class="title" style="color: #FF5252;">YAH, NABRAK!</div>
-                <div class="subtitle" style="color: white; font-size: 24px;">Skor Kamu: <span id="finalScore">0</span></div>
+                <div class="title" style="color: #FF5252; text-shadow: 4px 4px 0 #b71c1c;">YAH, NABRAK!</div>
+                <div class="subtitle" style="font-size: 24px;">Skor Kamu: <span id="finalScore">0</span></div>
                 <button class="btn-play" onclick="startGame()">COBA LAGI</button>
             </div>
         </div>
@@ -155,11 +154,11 @@
             const now = audioCtx.currentTime;
             
             if (type === 'jump') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
-                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                osc.start(now); osc.stop(now + 0.2);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
             } else if (type === 'score') {
-                osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now); osc.frequency.setValueAtTime(1200, now + 0.05);
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(900, now); osc.frequency.setValueAtTime(1400, now + 0.05);
                 gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
                 osc.start(now); osc.stop(now + 0.3);
             } else if (type === 'hit') {
@@ -167,7 +166,6 @@
                 gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
                 osc.start(now); osc.stop(now + 0.3);
             } else if (type === 'stageUp') {
-                // Suara khusus naik level
                 osc.type = 'square'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2);
                 gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
                 osc.start(now); osc.stop(now + 0.5);
@@ -183,19 +181,22 @@
         let currentStage = 1, stageAnnounceTimer = 0;
         let cw, ch;
 
-        const GRAVITY = 1800, JUMP_VELOCITY = -700, GROUND_Y_RATIO = 0.80;
-        const SCORE_PER_STAGE = 60; // Naik level tiap 60 poin (4 batu berhasil dilewati sempurna)
+        // FISIKA DIPERBAIKI (Lebih cepat, jatuh lebih berat, tidak floaty)
+        const GRAVITY = 2800; // Dulu 1800, sekarang tarikan ke bawah lebih kuat
+        const JUMP_VELOCITY = -950; // Dulu -700, loncatan lebih bertenaga
+        const GROUND_Y_RATIO = 0.82; 
+        const SCORE_PER_STAGE = 60;
 
-        // Tema Warna per Stage
+        // Tema Warna per Stage (Hanya merubah langit)
         const stageColors = [
-            { top: '#87CEEB', bot: '#E0F7FA' }, // Stage 1 (Siang Cerah)
-            { top: '#FFB74D', bot: '#FFE082' }, // Stage 2 (Sore)
-            { top: '#F06292', bot: '#F8BBD0' }, // Stage 3 (Senja Pink)
-            { top: '#5E35B1', bot: '#9575CD' }, // Stage 4 (Malam)
-            { top: '#b71c1c', bot: '#e53935' }  // Stage 5 (Hardcore)
+            { top: '#87CEEB', bot: '#E0F7FA' }, // Siang
+            { top: '#FF9800', bot: '#FFE082' }, // Sore
+            { top: '#9C27B0', bot: '#F8BBD0' }, // Senja
+            { top: '#1A237E', bot: '#5C6BC0' }, // Malam
+            { top: '#b71c1c', bot: '#ef5350' }  // Ekstrem
         ];
 
-        let characters = [], obstacles = [], particles = [], trackOffset = 0, bgOffset = 0;
+        let characters = [], obstacles = [], clouds = [], trackOffset = 0, bgOffset = 0;
 
         function resize() {
             cw = canvasContainer.clientWidth; ch = canvasContainer.clientHeight;
@@ -203,68 +204,133 @@
         }
         window.addEventListener('resize', resize); resize();
 
-        // --- CLASSES (Particle, Character, Obstacle) ---
-        class Particle {
-            constructor(x, y) {
-                this.x = x + (Math.random() * 20 - 10);
-                this.y = y;
-                // Partikel terlempar ke kiri mengikuti angin
-                this.vx = (Math.random() * 100 - 50) - (gameSpeed * 0.4); 
-                this.vy = Math.random() * -120;
-                this.life = 1.0;
-                this.size = Math.random() * 6 + 3;
+        // --- BACKGROUND SCENERY (Awan, Gunung, Ladang) ---
+        class Cloud {
+            constructor() {
+                this.x = cw + Math.random() * 200;
+                this.y = ch * (0.05 + Math.random() * 0.2);
+                this.speed = (cw * 0.05) + Math.random() * (cw * 0.05); // Jalan lambat
+                this.scale = 0.5 + Math.random() * 0.8;
             }
-            update(dt) {
-                this.x += this.vx * dt; this.y += this.vy * dt;
-                this.life -= dt * 2.5; 
-            }
+            update(dt) { this.x -= this.speed * dt; }
             draw(ctx) {
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.life})`;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 30 * this.scale, Math.PI * 0.5, Math.PI * 1.5);
+                ctx.arc(this.x + 25 * this.scale, this.y - 15 * this.scale, 35 * this.scale, Math.PI * 1, Math.PI * 2);
+                ctx.arc(this.x + 55 * this.scale, this.y, 25 * this.scale, Math.PI * 1.5, Math.PI * 0.5);
+                ctx.closePath(); ctx.fill();
             }
         }
 
-        function createDust(x, y) {
-            // Batasi jumlah maksimal partikel agar tidak lag
-            if(particles.length < 40) { 
-                for(let i=0; i<6; i++) particles.push(new Particle(x, y));
+        function drawMountains() {
+            let mX = -(bgOffset * 0.2) % cw; // Efek parallax sangat lambat
+            ctx.fillStyle = '#90A4AE'; // Warna abu gunung
+            
+            // Gambar 2 gunung berulang agar tidak putus
+            for (let i = 0; i < 2; i++) {
+                let startX = mX + (i * cw);
+                
+                // Gunung Kiri
+                ctx.beginPath();
+                ctx.moveTo(startX - 100, ch * GROUND_Y_RATIO);
+                ctx.lineTo(startX + cw*0.3, ch * 0.3); // Puncak
+                ctx.lineTo(startX + cw*0.7, ch * GROUND_Y_RATIO);
+                ctx.fill();
+                
+                // Salju Gunung Kiri
+                ctx.fillStyle = '#CFD8DC';
+                ctx.beginPath();
+                ctx.moveTo(startX + cw*0.3, ch * 0.3);
+                ctx.lineTo(startX + cw*0.2, ch * 0.45);
+                ctx.lineTo(startX + cw*0.3, ch * 0.4);
+                ctx.lineTo(startX + cw*0.4, ch * 0.45);
+                ctx.fill();
+                
+                // Gunung Kanan (Lebih kecil)
+                ctx.fillStyle = '#78909C';
+                ctx.beginPath();
+                ctx.moveTo(startX + cw*0.4, ch * GROUND_Y_RATIO);
+                ctx.lineTo(startX + cw*0.7, ch * 0.4); // Puncak
+                ctx.lineTo(startX + cw*1.1, ch * GROUND_Y_RATIO);
+                ctx.fill();
             }
         }
 
+        function drawFields() {
+            let fX = -(bgOffset * 0.5) % cw; // Efek parallax medium
+            
+            for (let i = 0; i < 2; i++) {
+                let startX = fX + (i * cw);
+                // Bukit Belakang
+                ctx.fillStyle = '#689F38';
+                ctx.beginPath();
+                ctx.moveTo(startX, ch * GROUND_Y_RATIO);
+                ctx.quadraticCurveTo(startX + cw*0.5, ch * 0.55, startX + cw, ch * GROUND_Y_RATIO);
+                ctx.fill();
+                
+                // Bukit Depan (Ladang)
+                ctx.fillStyle = '#8BC34A';
+                ctx.beginPath();
+                ctx.moveTo(startX - cw*0.2, ch * GROUND_Y_RATIO);
+                ctx.quadraticCurveTo(startX + cw*0.3, ch * 0.65, startX + cw*0.8, ch * GROUND_Y_RATIO);
+                ctx.fill();
+            }
+        }
+
+        // --- CLASSES (Character, Obstacle) ---
         class Character {
             constructor(emoji, zone) {
                 this.emoji = emoji; this.zone = zone; 
                 this.size = ch * 0.16;
-                this.x = (cw / 4) * (this.zone + 1); 
+                
+                // JARAK LEBIH LEBAR AGAR TIDAK RAPET DI HP
+                // Zone 0: 20%, Zone 1: 50%, Zone 2: 80% dari layar
+                this.baseX = cw * (0.2 + (this.zone * 0.3));
+                this.x = this.baseX;
+                
                 this.y = ch * GROUND_Y_RATIO;
                 this.vy = 0; this.isJumping = false;
+                
+                // Hitbox dimudahkan
                 this.hitRadius = this.size * 0.25; 
             }
             jump() {
                 if (!this.isJumping) {
                     this.vy = JUMP_VELOCITY; this.isJumping = true;
                     playSFX('jump');
-                    createDust(this.x, this.y); // Debu saat melompat
                 }
             }
             update(dt) {
-                this.x = (cw / 4) * (this.zone + 1);
                 this.size = ch * 0.16; this.hitRadius = this.size * 0.25;
+                this.baseX = cw * (0.2 + (this.zone * 0.3));
                 let ground = ch * GROUND_Y_RATIO;
 
                 if (this.isJumping) {
-                    this.vy += GRAVITY * dt; this.y += this.vy * dt;
+                    this.vy += GRAVITY * dt; 
+                    this.y += this.vy * dt;
+                    
+                    // EFEK LOMPAT KE DEPAN (Maju saat di udara, mundur saat mendarat)
+                    let heightFromGround = ground - this.y;
+                    this.x = this.baseX + (heightFromGround * 0.15); // Makin tinggi makin maju
+
                     if (this.y >= ground) {
                         this.y = ground; this.vy = 0; this.isJumping = false;
-                        createDust(this.x, this.y); // Debu saat mendarat
+                        this.x = this.baseX; // Kembali ke posisi awal
                     }
+                } else {
+                    this.x = this.baseX;
+                    this.y = ground;
                 }
             }
             draw(ctx) {
                 ctx.save(); ctx.translate(this.x, this.y - this.size/2);
                 ctx.font = `${this.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                if (this.isJumping) ctx.rotate(0.2); 
-                ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 8;
+                
+                // Sedikit berputar jika sedang lompat agar lebih dinamis
+                if (this.isJumping) ctx.rotate(0.15); 
+                
+                ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 10;
                 ctx.fillText(this.emoji, 0, 0);
                 ctx.restore();
             }
@@ -287,12 +353,14 @@
         // --- MAIN GAME LOOP ---
         function init() {
             characters = [new Character('🍊', 0), new Character('🌽', 1), new Character('🥕', 2)];
-            obstacles = []; particles = [];
+            obstacles = []; clouds = [new Cloud(), new Cloud()];
             score = 0; currentStage = 1; stageAnnounceTimer = 0;
-            gameSpeed = cw * 0.35; 
+            
+            // KECEPATAN DASAR DINAIKKAN AGAR GAMEPLAY LEBIH MENGALIR
+            gameSpeed = cw * 0.6; 
             document.getElementById('scoreDisplay').innerText = `🪙 0`;
             document.getElementById('stageDisplay').innerText = `STAGE 1`;
-            nextObstacleTime = 2000;
+            nextObstacleTime = 1500;
         }
 
         function startGame() {
@@ -319,34 +387,36 @@
         }
 
         function update(dt) {
-            gameSpeed += dt * 1.0; 
-            bgOffset = (bgOffset + (gameSpeed * 0.1) * dt) % cw;
+            gameSpeed += dt * 2.0; // Kecepatan bertambah sangat perlahan
+            bgOffset = (bgOffset + gameSpeed * dt);
             trackOffset = (trackOffset + gameSpeed * dt) % 160; 
 
-            // Timer Pengumuman Stage
             if (stageAnnounceTimer > 0) stageAnnounceTimer -= dt;
 
-            // Checkpoint System (Naik Level)
+            // Checkpoint Stage
             let targetStage = Math.floor(score / SCORE_PER_STAGE) + 1;
             if (targetStage > currentStage) {
                 currentStage = targetStage;
-                stageAnnounceTimer = 2.5; // Tampilkan teks selama 2.5 detik
+                stageAnnounceTimer = 2.0; 
                 playSFX('stageUp');
-                gameSpeed += 50; // Langsung tambah kecepatan sediki setiap naik stage
+                gameSpeed += cw * 0.05; // Tambah speed tiap stage
                 document.getElementById('stageDisplay').innerText = `STAGE ${currentStage}`;
             }
 
-            characters.forEach(char => char.update(dt));
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update(dt); if (particles[i].life <= 0) particles.splice(i, 1);
-            }
+            // Update Awan
+            clouds.forEach(c => c.update(dt));
+            if (Math.random() < 0.005 && clouds.length < 4) clouds.push(new Cloud());
+            clouds = clouds.filter(c => c.x > -100);
 
+            characters.forEach(char => char.update(dt));
+
+            // Munculkan Batu (Jarak diperlebar agar tidak rapet)
             nextObstacleTime -= dt * 1000;
             if (nextObstacleTime <= 0) {
                 obstacles.push(new Obstacle());
-                // Jeda batu bergantung pada Stage (semakin tinggi stage, jeda makin cepat)
-                let baseWait = Math.max(800, 1800 - (currentStage * 150)); 
-                nextObstacleTime = Math.random() * 1000 + baseWait; 
+                // Waktu random batu minimal 1 detik agar pemain sempat bernapas
+                let baseWait = Math.max(1000, 1600 - (currentStage * 100)); 
+                nextObstacleTime = Math.random() * 800 + baseWait; 
             }
 
             for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -368,44 +438,44 @@
         function draw() {
             ctx.clearRect(0, 0, cw, ch);
 
-            // 1. Gambar Langit Dinamis Sesuai Stage
+            // 1. Langit Dinamis
             let colorIndex = Math.min(currentStage - 1, stageColors.length - 1);
             let activeColor = stageColors[colorIndex];
-            
             let skyGrad = ctx.createLinearGradient(0, 0, 0, ch);
-            skyGrad.addColorStop(0, activeColor.top);
-            skyGrad.addColorStop(1, activeColor.bot);
+            skyGrad.addColorStop(0, activeColor.top); skyGrad.addColorStop(1, activeColor.bot);
             ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, cw, ch);
             
-            // 2. Trek Balap
+            // 2. Awan
+            clouds.forEach(c => c.draw(ctx));
+
+            // 3. Gunung & Ladang (Parallax Background)
+            drawMountains();
+            drawFields();
+
+            // 4. Trek Balap
             let groundY = ch * GROUND_Y_RATIO;
+            
+            // Garis pembatas ladang dan trek
+            ctx.fillStyle = '#388E3C'; ctx.fillRect(0, groundY - 15, cw, 15); 
+            
             for (let x = -trackOffset; x < cw; x += 160) {
                 ctx.fillStyle = '#FFCA28'; ctx.fillRect(x, groundY, 80, ch - groundY);
                 ctx.fillStyle = '#FF7043'; ctx.fillRect(x + 80, groundY, 80, ch - groundY);
             }
             ctx.fillStyle = '#4CAF50'; ctx.fillRect(0, groundY, cw, 10); 
 
-            // Garis transparan UI di canvas
-            ctx.fillStyle = 'rgba(255,255,255,0.05)';
-            ctx.fillRect(cw/4 - cw/8, 0, cw/4, ch); ctx.fillRect((cw/4)*3 - cw/8, 0, cw/4, ch);
-
-            // 3. Objek Permainan
+            // 5. Objek Permainan
             obstacles.forEach(obs => obs.draw(ctx));
             characters.forEach(char => char.draw(ctx));
-            particles.forEach(p => p.draw(ctx));
 
-            // 4. Notifikasi Animasi "STAGE UP"
+            // 6. Teks STAGE UP
             if (stageAnnounceTimer > 0) {
                 ctx.save();
-                // Efek fade-in & fade-out transisi
                 let alpha = Math.min(1, stageAnnounceTimer);
                 ctx.fillStyle = `rgba(255, 235, 59, ${alpha})`;
-                ctx.font = `900 ${ch * 0.12}px Nunito`; // Ukuran besar di tengah layar
+                ctx.font = `900 ${ch * 0.12}px Nunito`; 
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                
-                // Outline tulisan
-                ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
-                ctx.lineWidth = 6;
+                ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`; ctx.lineWidth = 6;
                 ctx.strokeText(`STAGE ${currentStage}!`, cw / 2, ch / 3);
                 ctx.fillText(`STAGE ${currentStage}!`, cw / 2, ch / 3);
                 ctx.restore();
