@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gao Ran Racing - Mario Style</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800&display=swap');
+
+        body {
+            margin: 0; padding: 0; background-color: #333;
+            font-family: 'Nunito', sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        #game-container {
+            position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 450px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
+            overflow: hidden; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Lingkungan Game */
+        .scrolling-bg {
+            position: absolute; bottom: 25%; width: 200%; height: 50%;
+            background-image: 
+                radial-gradient(circle at 10% 80%, #7CB342 10%, transparent 11%),
+                radial-gradient(circle at 40% 90%, #558B2F 20%, transparent 21%),
+                radial-gradient(circle at 80% 85%, #8BC34A 15%, transparent 16%);
+            animation: scrollBg 12s linear infinite; z-index: 1;
+        }
+
+        .track {
+            position: absolute; bottom: 0; width: 200%; height: 25%;
+            background: repeating-linear-gradient(90deg, #FFCA28, #FFCA28 80px, #FF7043 80px, #FF7043 160px);
+            border-top: 8px solid #4CAF50;
+            animation: scrollBg 4s linear infinite; z-index: 2;
+        }
+
+        @keyframes scrollBg {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Karakter - Hitbox Disesuaikan */
+        .character {
+            position: absolute; font-size: 55px; z-index: 10; cursor: pointer;
+            bottom: 25%; /* Posisi di tanah */
+            line-height: 1; display: flex; justify-content: center; align-items: center;
+            filter: drop-shadow(2px 4px 0px rgba(0,0,0,0.3));
+        }
+        
+        #char-orange { left: 15%; }
+        #char-corn { left: 35%; }
+        #char-carrot { left: 55%; }
+
+        /* Animasi Lompat (Mario/Flappy Style) */
+        .jump-anim {
+            animation: flappyJump 0.65s cubic-bezier(0.1, 0.7, 1, 0.1) forwards !important;
+        }
+
+        @keyframes flappyJump {
+            0%   { bottom: 25%; }
+            50%  { bottom: 45%; transform: scale(1.1) rotate(10deg); } /* Cukup tinggi tuk lewati batu */
+            100% { bottom: 25%; transform: scale(1) rotate(0deg); }
+        }
+
+        /* Rintangan Batu - Bergerak pakai CSS agar mulus di semua layar */
+        .obstacle {
+            position: absolute; bottom: 25%; font-size: 45px; z-index: 5;
+            line-height: 1; left: 100%;
+            filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5));
+        }
+
+        @keyframes rockMove {
+            0% { left: 100%; }
+            100% { left: -15%; } /* Lewati layar ke kiri */
+        }
+
+        /* UI Game */
+        .hud {
+            position: absolute; top: 15px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between; z-index: 20;
+        }
+        .status-box {
+            background: rgba(0, 0, 0, 0.6); color: white;
+            padding: 8px 15px; border-radius: 20px; font-size: 18px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        #game-over {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); color: white;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; font-size: 32px; text-align: center;
+        }
+        #restart-btn {
+            margin-top: 20px; padding: 10px 30px; font-size: 24px;
+            background: #4CAF50; color: white; border: none; border-radius: 10px;
+            cursor: pointer; font-family: 'Nunito', sans-serif; border-bottom: 5px solid #388E3C;
+        }
+        #restart-btn:active { transform: translateY(5px); border-bottom: 0; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- HUD -->
+        <div class="hud">
+            <div class="status-box" id="score-display">🪙 0</div>
+            <div class="status-box" style="font-size:14px; background:transparent; border:none; text-shadow: 1px 1px 2px black;">Tap karakter saat batu mendekat!</div>
+        </div>
+
+        <div class="scrolling-bg" id="bg"></div>
+        <div class="track" id="track"></div>
+
+        <!-- Characters -->
+        <div class="character" id="char-orange">🍊</div>
+        <div class="character" id="char-corn">🌽</div>
+        <div class="character" id="char-carrot">🥕</div>
+
+        <div id="obstacles-container"></div>
+
+        <!-- Game Over -->
+        <div id="game-over">
+            <div>YAH KETABRAK! 🥺</div>
+            <div style="font-size: 20px; margin-top: 10px;">Skor Kamu: <span id="final-score">0</span></div>
+            <button id="restart-btn" onclick="resetGame()">Coba Lagi</button>
+        </div>
+    </div>
+
+    <script>
+        const scoreDisplay = document.getElementById('score-display');
+        const gameOverScreen = document.getElementById('game-over');
+        const obstaclesContainer = document.getElementById('obstacles-container');
+        
+        let score = 0;
+        let isGameOver = false;
+        let collisionLoop;
+        let spawnTimeout;
+        let rockSpeed = 3.5; // Batu memakan waktu 3.5 detik untuk melintasi layar
+
+        const chars = [
+            document.getElementById('char-orange'),
+            document.getElementById('char-corn'),
+            document.getElementById('char-carrot')
+        ];
+
+        // --- SISTEM LOMPATAN ---
+        chars.forEach(charEl => {
+            // Touch untuk Mobile/iPad, Mousedown untuk PC
+            charEl.addEventListener('touchstart', (e) => { e.preventDefault(); jump(charEl); }, {passive: false});
+            charEl.addEventListener('mousedown', (e) => { e.preventDefault(); jump(charEl); });
+        });
+
+        function jump(charEl) {
+            // Jika sudah melompat atau game over, abaikan tap
+            if (charEl.classList.contains('jump-anim') || isGameOver) return;
+            
+            // Tambahkan class animasi lompat
+            charEl.classList.add('jump-anim');
+            
+            // Hapus class setelah durasi animasi selesai (650ms) agar bisa lompat lagi
+            setTimeout(() => {
+                if(!isGameOver) charEl.classList.remove('jump-anim');
+            }, 650);
+        }
+
+        // --- SISTEM SPAWN BATU ---
+        function spawnObstacle() {
+            if (isGameOver) return;
+
+            const obsEl = document.createElement('div');
+            obsEl.classList.add('obstacle');
+            obsEl.innerText = '🪨'; 
+            obsEl.style.animation = `rockMove ${rockSpeed}s linear forwards`;
+            obstaclesContainer.appendChild(obsEl);
+
+            // Tambah skor dan hapus batu HANYA JIKA batu sukses lewat layar
+            obsEl.addEventListener('animationend', () => {
+                if (!isGameOver) {
+                    obsEl.remove();
+                    score += 15; // Berhasil melewati 3 karakter
+                    scoreDisplay.innerText = '🪙 ' + score;
+                    if(rockSpeed > 2.0) rockSpeed -= 0.05; // Game jadi makin cepat sedikit demi sedikit
+                }
+            });
+
+            // Jadwalkan batu berikutnya secara acak (jeda 1.8 detik s/d 3 detik)
+            const nextSpawnTime = Math.random() * 1200 + 1800;
+            spawnTimeout = setTimeout(spawnObstacle, nextSpawnTime);
+        }
+
+        // --- SISTEM TABRAKAN (PIXEL PERFECT HITBOX) ---
+        function checkCollisions() {
+            if (isGameOver) return;
+
+            const rocks = document.querySelectorAll('.obstacle');
+            
+            rocks.forEach(rock => {
+                const rockBox = rock.getBoundingClientRect();
+                
+                chars.forEach(charEl => {
+                    const charBox = charEl.getBoundingClientRect();
+                    
+                    // Padding: Hitbox sedikit diperkecil (15px) agar fair (tidak mudah mati jika tersentuh pinggirnya)
+                    const padding = 15; 
+
+                    const isColliding = !(
+                        charBox.top + padding > rockBox.bottom ||
+                        charBox.right - padding < rockBox.left ||
+                        charBox.bottom - padding < rockBox.top ||
+                        charBox.left + padding > rockBox.right
+                    );
+
+                    if (isColliding) {
+                        endGame();
+                    }
+                });
+            });
+
+            collisionLoop = requestAnimationFrame(checkCollisions);
+        }
+
+        function endGame() {
+            isGameOver = true;
+            clearTimeout(spawnTimeout);
+            cancelAnimationFrame(collisionLoop);
+            
+            // Bekukan semua animasi (Background & Batu)
+            document.getElementById('bg').style.animationPlayState = 'paused';
+            document.getElementById('track').style.animationPlayState = 'paused';
+            document.querySelectorAll('.obstacle').forEach(obs => obs.style.animationPlayState = 'paused');
+            chars.forEach(char => char.style.animationPlayState = 'paused');
+
+            gameOverScreen.style.display = 'flex';
+            document.getElementById('final-score').innerText = score;
+        }
+
+        function resetGame() {
+            isGameOver = false;
+            score = 0;
+            rockSpeed = 3.5;
+            scoreDisplay.innerText = '🪙 ' + score;
+            
+            // Bersihkan layar dari batu
+            obstaclesContainer.innerHTML = '';
+            
+            // Reset Karakter
+            chars.forEach(char => {
+                char.classList.remove('jump-anim');
+                char.style.animationPlayState = 'running';
+            });
+
+            gameOverScreen.style.display = 'none';
+            document.getElementById('bg').style.animationPlayState = 'running';
+            document.getElementById('track').style.animationPlayState = 'running';
+            
+            // Mulai Ulang Loop
+            checkCollisions();
+            spawnObstacle();
+        }
+
+        // Mulai Game Pertama Kali
+        checkCollisions();
+        spawnObstacle();
+    </script>
+</body>
+</html>
