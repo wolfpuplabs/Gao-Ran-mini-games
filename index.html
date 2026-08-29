@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gao Ran Racing - Balanced Size</title>
+    <title>Gao Ran Racing - Professional Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap');
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #121212; font-family: 'Nunito', sans-serif;
+            background-color: #0d1117; font-family: 'Nunito', sans-serif;
             display: flex; justify-content: center; align-items: center;
             overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
         }
@@ -17,62 +17,72 @@
         #game-wrapper {
             position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 800px;
             display: flex; flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.9); overflow: hidden;
+            background: #87CEEB;
         }
 
-        #canvas-container { flex-grow: 1; position: relative; width: 100%; background: #87CEEB; }
+        #canvas-container { flex-grow: 1; position: relative; width: 100%; }
         canvas { display: block; width: 100%; height: 100%; }
 
+        /* Pro UI - Controls */
         #controls-container {
-            height: 110px; background: #2E7D32; border-top: 5px solid #1B5E20;
-            display: flex; justify-content: space-between; padding: 12px; gap: 12px; z-index: 100;
+            height: 110px; background: linear-gradient(to bottom, #2E7D32, #1B5E20);
+            border-top: 4px solid #4CAF50;
+            display: flex; justify-content: space-between; padding: 12px 16px; gap: 15px; z-index: 100;
         }
         
         .lane-btn {
-            flex: 1; background: #4CAF50; border: 4px solid #81C784; border-radius: 15px;
+            flex: 1; background: linear-gradient(to bottom, #66BB6A, #4CAF50);
+            border: 3px solid #A5D6A7; border-radius: 18px;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white; font-weight: 900; font-size: 18px; cursor: pointer;
-            box-shadow: 0 6px 0 #1B5E20; transition: transform 0.05s, box-shadow 0.05s;
+            color: white; font-weight: 900; font-size: 16px; cursor: pointer;
+            box-shadow: 0 8px 0 #1B5E20, 0 10px 15px rgba(0,0,0,0.3); 
+            transition: transform 0.05s, box-shadow 0.05s;
         }
         
         .lane-btn:active, .lane-btn.active-touch {
-            transform: translateY(6px); box-shadow: 0 0 0 #1B5E20; background: #66BB6A;
+            transform: translateY(8px); box-shadow: 0 0 0 #1B5E20, 0 0 0 rgba(0,0,0,0); 
+            background: linear-gradient(to bottom, #81C784, #66BB6A);
         }
 
-        .btn-emoji { font-size: 36px; line-height: 1; margin-bottom: 5px; }
+        .btn-emoji { font-size: 34px; line-height: 1; margin-bottom: 2px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
 
+        /* HUD */
         .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; }
-        .hud { display: flex; justify-content: space-between; padding: 15px; pointer-events: auto; }
+        .hud { display: flex; justify-content: space-between; padding: 20px; pointer-events: auto; }
 
         .hud-box {
-            background: rgba(0, 0, 0, 0.5); color: #FFEB3B;
-            padding: 8px 20px; border-radius: 20px; font-size: 22px; font-weight: 900;
-            border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.4); color: #FFEB3B;
+            padding: 8px 24px; border-radius: 30px; font-size: 24px; font-weight: 900;
+            border: 2px solid rgba(255,255,255,0.15); backdrop-filter: blur(8px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px;
         }
-        .hud-stage { color: #fff; background: rgba(33, 150, 243, 0.6); }
+        .hud-stage { color: #fff; background: rgba(33, 150, 243, 0.4); }
 
         .btn-sound {
-            background: rgba(0,0,0,0.5); color: white; border: 2px solid rgba(255,255,255,0.2);
-            width: 45px; height: 45px; border-radius: 50%; font-size: 20px; cursor: pointer;
+            background: rgba(0,0,0,0.4); color: white; border: 2px solid rgba(255,255,255,0.15);
+            width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer;
+            backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center;
         }
 
+        /* Screens */
         .screen-center {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(0,0,0,0.6); pointer-events: auto; transition: opacity 0.3s; z-index: 50; backdrop-filter: blur(3px);
+            background: rgba(10, 15, 25, 0.75); pointer-events: auto; transition: opacity 0.4s; z-index: 50; backdrop-filter: blur(5px);
         }
 
         .hidden { opacity: 0; pointer-events: none; display: none !important; }
         
-        .title { color: white; font-size: 46px; text-shadow: 4px 4px 0 #2E7D32; text-align: center; font-weight: 900; line-height: 1.1; }
-        .subtitle { color: #fff; background: #FF9800; padding: 5px 15px; border-radius: 20px; font-size: 16px; margin: 20px 0 30px 0; font-weight: 700; text-align: center; border: 2px solid #fff;}
+        .title { color: white; font-size: 52px; text-shadow: 0 6px 0 #2E7D32, 0 10px 20px rgba(0,0,0,0.5); text-align: center; font-weight: 900; line-height: 1.1; letter-spacing: 2px; }
+        .subtitle { color: #fff; background: rgba(255, 152, 0, 0.9); padding: 8px 20px; border-radius: 25px; font-size: 16px; margin: 25px 0 35px 0; font-weight: 700; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
         
         .btn-play {
-            background: linear-gradient(180deg, #FFCA28, #FF9800); color: #3e2723; border: 3px solid #fff; padding: 15px 60px; font-size: 30px;
+            background: linear-gradient(to bottom, #FFD54F, #FF9800); color: #3e2723; border: 4px solid #fff; padding: 15px 70px; font-size: 32px;
             border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 900;
-            box-shadow: 0 8px 0 #E65100; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 8px 0 #E65100, 0 15px 25px rgba(0,0,0,0.4); cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.1s, box-shadow 0.1s;
         }
-        .btn-play:active { transform: translateY(8px); box-shadow: 0 0 0 #E65100; }
+        .btn-play:active { transform: translateY(8px); box-shadow: 0 0 0 #E65100, 0 0 0 rgba(0,0,0,0); }
     </style>
 </head>
 <body>
@@ -85,7 +95,7 @@
             
             <div class="ui-layer" id="ui-hud" style="display: none;">
                 <div class="hud">
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 12px;">
                         <div class="hud-box" id="scoreDisplay">🪙 0</div>
                         <div class="hud-box hud-stage" id="stageDisplay">STAGE 1</div>
                     </div>
@@ -94,14 +104,14 @@
             </div>
 
             <div class="screen-center" id="ui-start">
-                <div class="title">GAO RAN<br>BERASTAGI</div>
+                <div class="title">GAO RAN<br>RACING</div>
                 <div class="subtitle">Tap tombol di bawah untuk melompat!</div>
                 <button class="btn-play" onclick="startGame()">MAIN</button>
             </div>
 
             <div class="screen-center hidden" id="ui-gameover">
-                <div class="title" style="color: #FF5252; text-shadow: 4px 4px 0 #b71c1c;">YAH, NABRAK!</div>
-                <div class="subtitle" style="font-size: 24px;">Skor Kamu: <span id="finalScore">0</span></div>
+                <div class="title" style="color: #FF5252; text-shadow: 0 6px 0 #b71c1c, 0 10px 20px rgba(0,0,0,0.5);">YAH, NABRAK!</div>
+                <div class="subtitle" style="font-size: 26px;">Skor Akhir: <span id="finalScore">0</span></div>
                 <button class="btn-play" onclick="startGame()">COBA LAGI</button>
             </div>
         </div>
@@ -114,10 +124,19 @@
     </div>
 
     <script>
+        // --- AUDIO SYSTEM (PRO SYNTH) ---
         let audioCtx, soundEnabled = true;
-        const bgm = document.getElementById('bgm'); bgm.volume = 0.3;
-        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
-        function toggleSound() { soundEnabled = !soundEnabled; document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇'; if (soundEnabled && state === 'PLAY') bgm.play(); else bgm.pause(); }
+        const bgm = document.getElementById('bgm'); bgm.volume = 0.25;
+        
+        function initAudio() { 
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+            if (audioCtx.state === 'suspended') audioCtx.resume(); 
+        }
+        function toggleSound() { 
+            soundEnabled = !soundEnabled; 
+            document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇'; 
+            if (soundEnabled && state === 'PLAY') bgm.play(); else bgm.pause(); 
+        }
         
         function playSFX(type) {
             if (!soundEnabled || !audioCtx) return;
@@ -125,62 +144,48 @@
             osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
             
             if (type === 'jump') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(450, now); osc.frequency.exponentialRampToValueAtTime(900, now + 0.15);
                 gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15); osc.start(now); osc.stop(now + 0.15);
             } else if (type === 'score') {
-                osc.type = 'triangle'; osc.frequency.setValueAtTime(900, now); osc.frequency.setValueAtTime(1400, now + 0.05);
-                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
+                osc.type = 'square'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1800, now + 0.05);
+                gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2); osc.start(now); osc.stop(now + 0.2);
             } else if (type === 'hit') {
-                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
                 gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
-            } else if (type === 'stageUp') {
-                osc.type = 'square'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2);
-                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5); osc.start(now); osc.stop(now + 0.5);
             }
         }
 
-        const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d'), canvasContainer = document.getElementById('canvas-container');
+        // --- GAME ENGINE ---
+        const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d'), container = document.getElementById('canvas-container');
         let state = 'START', lastTime = 0, score = 0, gameSpeed = 0, nextObstacleTime = 0, currentStage = 1, stageAnnounceTimer = 0, cw, ch;
 
-        // Fisika Vertikal Lurus & Pasti
-        const GRAVITY = 2500; 
-        const JUMP_VELOCITY = -850; 
+        // Fisika Profesional (Snappy & Responsive)
+        const GRAVITY = 3200; 
+        const JUMP_VELOCITY = -1000; 
         const GROUND_Y_RATIO = 0.82; 
         const SCORE_PER_STAGE = 60;
 
         const stageColors = [
-            { top: '#87CEEB', bot: '#E0F7FA' }, { top: '#FF9800', bot: '#FFE082' },
-            { top: '#9C27B0', bot: '#F8BBD0' }, { top: '#1A237E', bot: '#5C6BC0' }, { top: '#b71c1c', bot: '#ef5350' }
+            { top: '#64B5F6', bot: '#E1F5FE' }, { top: '#FFB74D', bot: '#FFF8E1' },
+            { top: '#BA68C8', bot: '#FCE4EC' }, { top: '#283593', bot: '#7986CB' }, { top: '#c62828', bot: '#ffcdd2' }
         ];
 
-        let characters = [], obstacles = [], clouds = [], trackOffset = 0, bgOffset = 0;
-        function resize() { cw = canvasContainer.clientWidth; ch = canvasContainer.clientHeight; canvas.width = cw; canvas.height = ch; }
+        let characters = [], obstacles = [], particles = [], floatingTexts = [], trackOffset = 0, bgOffset = 0, timeElapsed = 0;
+        function resize() { cw = container.clientWidth; ch = container.clientHeight; canvas.width = cw; canvas.height = ch; }
         window.addEventListener('resize', resize); resize();
 
-        class Cloud {
-            constructor() { this.x = cw + Math.random() * 200; this.y = ch * (0.05 + Math.random() * 0.2); this.speed = (cw * 0.05) + Math.random() * (cw * 0.05); this.scale = 0.5 + Math.random() * 0.8; }
-            update(dt) { this.x -= this.speed * dt; }
-            draw(ctx) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.beginPath();
-                ctx.arc(this.x, this.y, 30 * this.scale, Math.PI * 0.5, Math.PI * 1.5);
-                ctx.arc(this.x + 25 * this.scale, this.y - 15 * this.scale, 35 * this.scale, Math.PI * 1, Math.PI * 2);
-                ctx.arc(this.x + 55 * this.scale, this.y, 25 * this.scale, Math.PI * 1.5, Math.PI * 0.5);
-                ctx.closePath(); ctx.fill();
-            }
-        }
-
+        // --- BACKGROUND & PARALLAX ---
         function drawMountains() {
-            let mX = -(bgOffset * 0.2) % cw; ctx.fillStyle = '#90A4AE'; 
+            let mX = -(bgOffset * 0.15) % cw; ctx.fillStyle = '#90A4AE'; 
             for (let i = 0; i < 2; i++) {
                 let startX = mX + (i * cw);
                 ctx.beginPath(); ctx.moveTo(startX - 100, ch * GROUND_Y_RATIO); ctx.lineTo(startX + cw*0.3, ch * 0.3); ctx.lineTo(startX + cw*0.7, ch * GROUND_Y_RATIO); ctx.fill();
-                ctx.fillStyle = '#CFD8DC'; ctx.beginPath(); ctx.moveTo(startX + cw*0.3, ch * 0.3); ctx.lineTo(startX + cw*0.2, ch * 0.45); ctx.lineTo(startX + cw*0.3, ch * 0.4); ctx.lineTo(startX + cw*0.4, ch * 0.45); ctx.fill();
+                ctx.fillStyle = '#CFD8DC'; ctx.beginPath(); ctx.moveTo(startX + cw*0.3, ch * 0.3); ctx.lineTo(startX + cw*0.2, ch * 0.45); ctx.lineTo(startX + cw*0.3, ch * 0.42); ctx.lineTo(startX + cw*0.4, ch * 0.45); ctx.fill();
                 ctx.fillStyle = '#78909C'; ctx.beginPath(); ctx.moveTo(startX + cw*0.4, ch * GROUND_Y_RATIO); ctx.lineTo(startX + cw*0.7, ch * 0.4); ctx.lineTo(startX + cw*1.1, ch * GROUND_Y_RATIO); ctx.fill();
             }
         }
-
         function drawFields() {
-            let fX = -(bgOffset * 0.5) % cw; 
+            let fX = -(bgOffset * 0.4) % cw; 
             for (let i = 0; i < 2; i++) {
                 let startX = fX + (i * cw);
                 ctx.fillStyle = '#689F38'; ctx.beginPath(); ctx.moveTo(startX, ch * GROUND_Y_RATIO); ctx.quadraticCurveTo(startX + cw*0.5, ch * 0.55, startX + cw, ch * GROUND_Y_RATIO); ctx.fill();
@@ -188,58 +193,115 @@
             }
         }
 
+        // --- VISUAL EFFECTS (VFX) ---
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.vx = (Math.random() - 0.5) * 150 - (gameSpeed * 0.5); 
+                this.vy = (Math.random() - 1) * 150;
+                this.life = 1.0; this.size = Math.random() * 8 + 4;
+            }
+            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt * 3; }
+            draw(ctx) {
+                ctx.fillStyle = this.color.replace(')', `, ${this.life})`).replace('rgb', 'rgba');
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+            }
+        }
+        class FloatingText {
+            constructor(text, x, y) {
+                this.text = text; this.x = x; this.y = y; this.life = 1.0; this.vy = -100;
+            }
+            update(dt) { this.y += this.vy * dt; this.life -= dt * 1.5; }
+            draw(ctx) {
+                ctx.save(); ctx.globalAlpha = Math.max(0, this.life);
+                ctx.font = `900 ${ch * 0.05}px Nunito`; ctx.fillStyle = '#FFEB3B'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
+                ctx.strokeText(this.text, this.x, this.y); ctx.fillText(this.text, this.x, this.y); ctx.restore();
+            }
+        }
+        function spawnDust(x, y) { for(let i=0; i<5; i++) particles.push(new Particle(x, y, 'rgb(200, 200, 200)')); }
+
+        // --- GAME ENTITIES ---
         class Character {
             constructor(emoji, zone) {
                 this.emoji = emoji; this.zone = zone; 
-                this.size = ch * 0.11; // UKURAN DIPERKECIL
-                this.baseX = cw * (0.2 + (this.zone * 0.3));
+                this.size = ch * 0.11; 
+                
+                // MUNDUR KE KIRI: Jarak fix berdasarkan ukuran mereka sendiri agar rapi dan tidak ke tengah
+                let startPadding = cw * 0.10; // Mulai dari 10% layar kiri
+                let gap = this.size * 1.3; // Jarak antar karakter sedikit lebih besar dari ukurannya
+                this.baseX = startPadding + (this.zone * gap);
+                
                 this.x = this.baseX; this.y = ch * GROUND_Y_RATIO;
                 this.vy = 0; this.isJumping = false;
-                this.hitRadius = this.size * 0.25; // Hitbox mungil
+                this.hitRadius = this.size * 0.25; 
             }
-            jump() { if (!this.isJumping) { this.vy = JUMP_VELOCITY; this.isJumping = true; playSFX('jump'); } }
+            jump() { if (!this.isJumping) { this.vy = JUMP_VELOCITY; this.isJumping = true; playSFX('jump'); spawnDust(this.x, this.y); } }
+            
             update(dt) {
                 this.size = ch * 0.11; this.hitRadius = this.size * 0.25;
-                this.baseX = cw * (0.2 + (this.zone * 0.3));
-                this.x = this.baseX; // TIDAK ADA LAGI EFEK MAJU KE DEPAN
+                let gap = this.size * 1.3;
+                this.baseX = (cw * 0.10) + (this.zone * gap);
+                this.x = this.baseX;
                 
                 let ground = ch * GROUND_Y_RATIO;
                 if (this.isJumping) {
                     this.vy += GRAVITY * dt; this.y += this.vy * dt;
-                    if (this.y >= ground) { this.y = ground; this.vy = 0; this.isJumping = false; }
+                    if (this.y >= ground) { this.y = ground; this.vy = 0; this.isJumping = false; spawnDust(this.x, this.y); }
                 } else {
                     this.y = ground;
                 }
             }
+            
             draw(ctx) {
-                ctx.save(); ctx.translate(this.x, this.y - this.size/2);
+                ctx.save();
+                
+                // Idle Animation (Napas naik turun) saat tidak lompat
+                let bob = this.isJumping ? 0 : Math.sin(timeElapsed * 10 + this.zone) * (this.size * 0.05);
+                ctx.translate(this.x, this.y - this.size/2 + bob);
+                
+                // Squash & Stretch Animation
+                let scaleX = 1, scaleY = 1;
+                if (this.isJumping) {
+                    scaleX = 0.9; scaleY = 1.1; // Memanjang saat naik
+                    if (this.vy > 0) { scaleX = 1.05; scaleY = 0.95; } // Memipih saat turun
+                }
+                ctx.scale(scaleX, scaleY);
+                
                 ctx.font = `${this.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 if (this.isJumping) ctx.rotate(0.15); 
-                ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 10; ctx.fillText(this.emoji, 0, 0); ctx.restore();
+                
+                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 8; 
+                ctx.fillText(this.emoji, 0, 0); 
+                ctx.restore();
             }
         }
 
         class Obstacle {
             constructor() {
-                this.size = ch * 0.09; // BATU JUGA DIPERKECIL
-                this.x = cw + this.size; this.y = ch * GROUND_Y_RATIO; 
-                this.hitRadius = this.size * 0.30;
-                this.passedBy = []; 
+                this.size = ch * 0.09; this.x = cw + this.size; this.y = ch * GROUND_Y_RATIO; 
+                this.hitRadius = this.size * 0.30; this.passedBy = []; this.rotation = 0;
             }
-            update(dt) { this.x -= gameSpeed * dt; }
+            update(dt) { 
+                this.x -= gameSpeed * dt; 
+                this.rotation -= (gameSpeed * dt) / (this.size/2); // Rotasi berdasarkan kecepatan (menggelinding)
+            }
             draw(ctx) {
-                ctx.save(); ctx.translate(this.x, this.y - this.size/2);
+                ctx.save(); ctx.translate(this.x, this.y - this.size/2.5);
+                ctx.rotate(this.rotation);
                 ctx.font = `${this.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowOffsetY = 5; ctx.fillText('🪨', 0, 0); ctx.restore();
+                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowOffsetY = 4; ctx.shadowBlur = 4;
+                ctx.fillText('🪨', 0, 0); ctx.restore();
             }
         }
 
+        // --- CORE LOOP ---
         function init() {
             characters = [new Character('🍊', 0), new Character('🌽', 1), new Character('🥕', 2)];
-            obstacles = []; clouds = [new Cloud(), new Cloud()];
+            obstacles = []; particles = []; floatingTexts = []; timeElapsed = 0;
             score = 0; currentStage = 1; stageAnnounceTimer = 0;
-            gameSpeed = cw * 0.6; document.getElementById('scoreDisplay').innerText = `🪙 0`; document.getElementById('stageDisplay').innerText = `STAGE 1`;
-            nextObstacleTime = 1500;
+            gameSpeed = cw * 0.7; // Speed awal dinamis menyesuaikan lebar layar
+            document.getElementById('scoreDisplay').innerText = `🪙 0`; document.getElementById('stageDisplay').innerText = `STAGE 1`;
+            nextObstacleTime = 1200;
         }
 
         function startGame() {
@@ -254,37 +316,51 @@
         }
 
         function gameLoop(timestamp) {
-            if (state !== 'PLAY') return; let dt = (timestamp - lastTime) / 1000; if (dt > 0.1) dt = 0.1; lastTime = timestamp;
+            if (state !== 'PLAY') return; 
+            let dt = (timestamp - lastTime) / 1000; if (dt > 0.1) dt = 0.1; lastTime = timestamp; timeElapsed += dt;
             update(dt); draw(); requestAnimationFrame(gameLoop);
         }
 
         function update(dt) {
-            gameSpeed += dt * 2.0; bgOffset = (bgOffset + gameSpeed * dt); trackOffset = (trackOffset + gameSpeed * dt) % 160; 
+            gameSpeed += dt * 3.0; // Gradual speed up
+            bgOffset = (bgOffset + gameSpeed * dt); trackOffset = (trackOffset + gameSpeed * dt) % 160; 
             if (stageAnnounceTimer > 0) stageAnnounceTimer -= dt;
 
+            // Stage Check
             let targetStage = Math.floor(score / SCORE_PER_STAGE) + 1;
             if (targetStage > currentStage) {
-                currentStage = targetStage; stageAnnounceTimer = 2.0; playSFX('stageUp'); gameSpeed += cw * 0.05;
+                currentStage = targetStage; stageAnnounceTimer = 2.0; playSFX('stageUp'); gameSpeed += cw * 0.06;
                 document.getElementById('stageDisplay').innerText = `STAGE ${currentStage}`;
             }
 
-            clouds.forEach(c => c.update(dt)); if (Math.random() < 0.005 && clouds.length < 4) clouds.push(new Cloud()); clouds = clouds.filter(c => c.x > -100);
+            // Updates
             characters.forEach(char => char.update(dt));
+            for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(dt); if (particles[i].life <= 0) particles.splice(i, 1); }
+            for (let i = floatingTexts.length - 1; i >= 0; i--) { floatingTexts[i].update(dt); if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); }
 
+            // Obstacle Spawner (Lebih bisa diprediksi)
             nextObstacleTime -= dt * 1000;
             if (nextObstacleTime <= 0) {
                 obstacles.push(new Obstacle());
-                let baseWait = Math.max(1000, 1600 - (currentStage * 100)); nextObstacleTime = Math.random() * 800 + baseWait; 
+                let baseWait = Math.max(900, 1500 - (currentStage * 100)); 
+                nextObstacleTime = Math.random() * 600 + baseWait; 
             }
 
+            // Collision & Scoring
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i]; obs.update(dt);
                 characters.forEach((char, index) => {
+                    // Cek Hitbox Circular
                     let dx = char.x - obs.x, dy = (char.y - char.size/2) - (obs.y - obs.size/2);
                     if (Math.sqrt(dx*dx + dy*dy) < char.hitRadius + obs.hitRadius) gameOver();
+                    
+                    // Cek Skor
                     if (obs.x < char.x && !obs.passedBy.includes(index)) {
                         obs.passedBy.push(index); score += 5; document.getElementById('scoreDisplay').innerText = `🪙 ${score}`;
-                        if (obs.passedBy.length === 1) playSFX('score');
+                        if (obs.passedBy.length === 1) {
+                            playSFX('score');
+                            floatingTexts.push(new FloatingText("+15", char.x + 30, char.y - char.size)); // Teks Pop-up
+                        }
                     }
                 });
                 if (obs.x < -100) obstacles.splice(i, 1);
@@ -293,26 +369,37 @@
 
         function draw() {
             ctx.clearRect(0, 0, cw, ch);
+            
+            // 1. Sky & Environment
             let colorIndex = Math.min(currentStage - 1, stageColors.length - 1), activeColor = stageColors[colorIndex];
             let skyGrad = ctx.createLinearGradient(0, 0, 0, ch); skyGrad.addColorStop(0, activeColor.top); skyGrad.addColorStop(1, activeColor.bot);
             ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, cw, ch);
+            drawMountains(); drawFields();
             
-            clouds.forEach(c => c.draw(ctx)); drawMountains(); drawFields();
-            
+            // 2. Track
             let groundY = ch * GROUND_Y_RATIO;
-            ctx.fillStyle = '#388E3C'; ctx.fillRect(0, groundY - 15, cw, 15); 
+            ctx.fillStyle = '#2E7D32'; ctx.fillRect(0, groundY - 12, cw, 12); // Tepi rumput gelap
             for (let x = -trackOffset; x < cw; x += 160) { ctx.fillStyle = '#FFCA28'; ctx.fillRect(x, groundY, 80, ch - groundY); ctx.fillStyle = '#FF7043'; ctx.fillRect(x + 80, groundY, 80, ch - groundY); }
-            ctx.fillStyle = '#4CAF50'; ctx.fillRect(0, groundY, cw, 10); 
+            ctx.fillStyle = '#4CAF50'; ctx.fillRect(0, groundY, cw, 8); // Garis start
 
-            obstacles.forEach(obs => obs.draw(ctx)); characters.forEach(char => char.draw(ctx));
+            // 3. Entities
+            obstacles.forEach(obs => obs.draw(ctx)); 
+            characters.forEach(char => char.draw(ctx));
+            particles.forEach(p => p.draw(ctx));
+            floatingTexts.forEach(ft => ft.draw(ctx));
 
+            // 4. Stage Announcer
             if (stageAnnounceTimer > 0) {
-                ctx.save(); let alpha = Math.min(1, stageAnnounceTimer); ctx.fillStyle = `rgba(255, 235, 59, ${alpha})`; ctx.font = `900 ${ch * 0.12}px Nunito`; 
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`; ctx.lineWidth = 6;
-                ctx.strokeText(`STAGE ${currentStage}!`, cw / 2, ch / 3); ctx.fillText(`STAGE ${currentStage}!`, cw / 2, ch / 3); ctx.restore();
+                ctx.save(); let alpha = Math.min(1, stageAnnounceTimer); 
+                let scale = 1 + (1 - alpha) * 0.5; // Efek membesar saat hilang
+                ctx.translate(cw / 2, ch / 3); ctx.scale(scale, scale);
+                ctx.fillStyle = `rgba(255, 235, 59, ${alpha})`; ctx.font = `900 ${ch * 0.12}px Nunito`; 
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`; ctx.lineWidth = 8;
+                ctx.strokeText(`STAGE ${currentStage}!`, 0, 0); ctx.fillText(`STAGE ${currentStage}!`, 0, 0); ctx.restore();
             }
         }
 
+        // --- CONTROLS ---
         const btns = [{ el: document.getElementById('btn-orange'), id: 0 }, { el: document.getElementById('btn-corn'), id: 1 }, { el: document.getElementById('btn-carrot'), id: 2 }];
         btns.forEach(btn => {
             btn.el.addEventListener('touchstart', (e) => { e.preventDefault(); btn.el.classList.add('active-touch'); if (state === 'PLAY') characters[btn.id].jump(); }, {passive: false});
