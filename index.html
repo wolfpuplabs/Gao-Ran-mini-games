@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gao Ran Racing - Scenery & Pro Physics</title>
+    <title>Gao Ran Racing - Balanced Size</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap');
 
@@ -20,17 +20,12 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden;
         }
 
-        #canvas-container {
-            flex-grow: 1; position: relative; width: 100%;
-            background: #87CEEB; 
-        }
+        #canvas-container { flex-grow: 1; position: relative; width: 100%; background: #87CEEB; }
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* Area Kontrol Jempol */
         #controls-container {
             height: 110px; background: #2E7D32; border-top: 5px solid #1B5E20;
-            display: flex; justify-content: space-between; padding: 12px; gap: 12px;
-            z-index: 100;
+            display: flex; justify-content: space-between; padding: 12px; gap: 12px; z-index: 100;
         }
         
         .lane-btn {
@@ -46,12 +41,7 @@
 
         .btn-emoji { font-size: 36px; line-height: 1; margin-bottom: 5px; }
 
-        /* HUD & UI */
-        .ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; display: flex; flex-direction: column;
-        }
-
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; }
         .hud { display: flex; justify-content: space-between; padding: 15px; pointer-events: auto; }
 
         .hud-box {
@@ -59,7 +49,6 @@
             padding: 8px 20px; border-radius: 20px; font-size: 22px; font-weight: 900;
             border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px);
         }
-        
         .hud-stage { color: #fff; background: rgba(33, 150, 243, 0.6); }
 
         .btn-sound {
@@ -70,8 +59,7 @@
         .screen-center {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(0,0,0,0.6); pointer-events: auto; transition: opacity 0.3s; z-index: 50;
-            backdrop-filter: blur(3px);
+            background: rgba(0,0,0,0.6); pointer-events: auto; transition: opacity 0.3s; z-index: 50; backdrop-filter: blur(3px);
         }
 
         .hidden { opacity: 0; pointer-events: none; display: none !important; }
@@ -80,8 +68,7 @@
         .subtitle { color: #fff; background: #FF9800; padding: 5px 15px; border-radius: 20px; font-size: 16px; margin: 20px 0 30px 0; font-weight: 700; text-align: center; border: 2px solid #fff;}
         
         .btn-play {
-            background: linear-gradient(180deg, #FFCA28, #FF9800);
-            color: #3e2723; border: 3px solid #fff; padding: 15px 60px; font-size: 30px;
+            background: linear-gradient(180deg, #FFCA28, #FF9800); color: #3e2723; border: 3px solid #fff; padding: 15px 60px; font-size: 30px;
             border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 900;
             box-shadow: 0 8px 0 #E65100; cursor: pointer; text-transform: uppercase;
         }
@@ -90,9 +77,7 @@
 </head>
 <body>
 
-    <audio id="bgm" loop>
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bgm" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg"></audio>
 
     <div id="game-wrapper">
         <div id="canvas-container">
@@ -129,93 +114,54 @@
     </div>
 
     <script>
-        // --- AUDIO SYSTEM ---
-        let audioCtx;
-        let soundEnabled = true;
-        const bgm = document.getElementById('bgm');
-        bgm.volume = 0.3;
-
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-
-        function toggleSound() {
-            soundEnabled = !soundEnabled;
-            document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
-            if (soundEnabled && state === 'PLAY') bgm.play(); else bgm.pause();
-        }
-
+        let audioCtx, soundEnabled = true;
+        const bgm = document.getElementById('bgm'); bgm.volume = 0.3;
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+        function toggleSound() { soundEnabled = !soundEnabled; document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇'; if (soundEnabled && state === 'PLAY') bgm.play(); else bgm.pause(); }
+        
         function playSFX(type) {
             if (!soundEnabled || !audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
             
             if (type === 'jump') {
                 osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
-                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-                osc.start(now); osc.stop(now + 0.15);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15); osc.start(now); osc.stop(now + 0.15);
             } else if (type === 'score') {
                 osc.type = 'triangle'; osc.frequency.setValueAtTime(900, now); osc.frequency.setValueAtTime(1400, now + 0.05);
-                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                osc.start(now); osc.stop(now + 0.3);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
             } else if (type === 'hit') {
                 osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
-                gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                osc.start(now); osc.stop(now + 0.3);
+                gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
             } else if (type === 'stageUp') {
                 osc.type = 'square'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2);
-                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                osc.start(now); osc.stop(now + 0.5);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5); osc.start(now); osc.stop(now + 0.5);
             }
         }
 
-        // --- GAME SYSTEM ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const canvasContainer = document.getElementById('canvas-container');
-        
-        let state = 'START', lastTime = 0, score = 0, gameSpeed = 0, nextObstacleTime = 0;
-        let currentStage = 1, stageAnnounceTimer = 0;
-        let cw, ch;
+        const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d'), canvasContainer = document.getElementById('canvas-container');
+        let state = 'START', lastTime = 0, score = 0, gameSpeed = 0, nextObstacleTime = 0, currentStage = 1, stageAnnounceTimer = 0, cw, ch;
 
-        // FISIKA DIPERBAIKI (Lebih cepat, jatuh lebih berat, tidak floaty)
-        const GRAVITY = 2800; // Dulu 1800, sekarang tarikan ke bawah lebih kuat
-        const JUMP_VELOCITY = -950; // Dulu -700, loncatan lebih bertenaga
+        // Fisika Vertikal Lurus & Pasti
+        const GRAVITY = 2500; 
+        const JUMP_VELOCITY = -850; 
         const GROUND_Y_RATIO = 0.82; 
         const SCORE_PER_STAGE = 60;
 
-        // Tema Warna per Stage (Hanya merubah langit)
         const stageColors = [
-            { top: '#87CEEB', bot: '#E0F7FA' }, // Siang
-            { top: '#FF9800', bot: '#FFE082' }, // Sore
-            { top: '#9C27B0', bot: '#F8BBD0' }, // Senja
-            { top: '#1A237E', bot: '#5C6BC0' }, // Malam
-            { top: '#b71c1c', bot: '#ef5350' }  // Ekstrem
+            { top: '#87CEEB', bot: '#E0F7FA' }, { top: '#FF9800', bot: '#FFE082' },
+            { top: '#9C27B0', bot: '#F8BBD0' }, { top: '#1A237E', bot: '#5C6BC0' }, { top: '#b71c1c', bot: '#ef5350' }
         ];
 
         let characters = [], obstacles = [], clouds = [], trackOffset = 0, bgOffset = 0;
-
-        function resize() {
-            cw = canvasContainer.clientWidth; ch = canvasContainer.clientHeight;
-            canvas.width = cw; canvas.height = ch;
-        }
+        function resize() { cw = canvasContainer.clientWidth; ch = canvasContainer.clientHeight; canvas.width = cw; canvas.height = ch; }
         window.addEventListener('resize', resize); resize();
 
-        // --- BACKGROUND SCENERY (Awan, Gunung, Ladang) ---
         class Cloud {
-            constructor() {
-                this.x = cw + Math.random() * 200;
-                this.y = ch * (0.05 + Math.random() * 0.2);
-                this.speed = (cw * 0.05) + Math.random() * (cw * 0.05); // Jalan lambat
-                this.scale = 0.5 + Math.random() * 0.8;
-            }
+            constructor() { this.x = cw + Math.random() * 200; this.y = ch * (0.05 + Math.random() * 0.2); this.speed = (cw * 0.05) + Math.random() * (cw * 0.05); this.scale = 0.5 + Math.random() * 0.8; }
             update(dt) { this.x -= this.speed * dt; }
             draw(ctx) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.beginPath();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.beginPath();
                 ctx.arc(this.x, this.y, 30 * this.scale, Math.PI * 0.5, Math.PI * 1.5);
                 ctx.arc(this.x + 25 * this.scale, this.y - 15 * this.scale, 35 * this.scale, Math.PI * 1, Math.PI * 2);
                 ctx.arc(this.x + 55 * this.scale, this.y, 25 * this.scale, Math.PI * 1.5, Math.PI * 0.5);
@@ -224,122 +170,60 @@
         }
 
         function drawMountains() {
-            let mX = -(bgOffset * 0.2) % cw; // Efek parallax sangat lambat
-            ctx.fillStyle = '#90A4AE'; // Warna abu gunung
-            
-            // Gambar 2 gunung berulang agar tidak putus
+            let mX = -(bgOffset * 0.2) % cw; ctx.fillStyle = '#90A4AE'; 
             for (let i = 0; i < 2; i++) {
                 let startX = mX + (i * cw);
-                
-                // Gunung Kiri
-                ctx.beginPath();
-                ctx.moveTo(startX - 100, ch * GROUND_Y_RATIO);
-                ctx.lineTo(startX + cw*0.3, ch * 0.3); // Puncak
-                ctx.lineTo(startX + cw*0.7, ch * GROUND_Y_RATIO);
-                ctx.fill();
-                
-                // Salju Gunung Kiri
-                ctx.fillStyle = '#CFD8DC';
-                ctx.beginPath();
-                ctx.moveTo(startX + cw*0.3, ch * 0.3);
-                ctx.lineTo(startX + cw*0.2, ch * 0.45);
-                ctx.lineTo(startX + cw*0.3, ch * 0.4);
-                ctx.lineTo(startX + cw*0.4, ch * 0.45);
-                ctx.fill();
-                
-                // Gunung Kanan (Lebih kecil)
-                ctx.fillStyle = '#78909C';
-                ctx.beginPath();
-                ctx.moveTo(startX + cw*0.4, ch * GROUND_Y_RATIO);
-                ctx.lineTo(startX + cw*0.7, ch * 0.4); // Puncak
-                ctx.lineTo(startX + cw*1.1, ch * GROUND_Y_RATIO);
-                ctx.fill();
+                ctx.beginPath(); ctx.moveTo(startX - 100, ch * GROUND_Y_RATIO); ctx.lineTo(startX + cw*0.3, ch * 0.3); ctx.lineTo(startX + cw*0.7, ch * GROUND_Y_RATIO); ctx.fill();
+                ctx.fillStyle = '#CFD8DC'; ctx.beginPath(); ctx.moveTo(startX + cw*0.3, ch * 0.3); ctx.lineTo(startX + cw*0.2, ch * 0.45); ctx.lineTo(startX + cw*0.3, ch * 0.4); ctx.lineTo(startX + cw*0.4, ch * 0.45); ctx.fill();
+                ctx.fillStyle = '#78909C'; ctx.beginPath(); ctx.moveTo(startX + cw*0.4, ch * GROUND_Y_RATIO); ctx.lineTo(startX + cw*0.7, ch * 0.4); ctx.lineTo(startX + cw*1.1, ch * GROUND_Y_RATIO); ctx.fill();
             }
         }
 
         function drawFields() {
-            let fX = -(bgOffset * 0.5) % cw; // Efek parallax medium
-            
+            let fX = -(bgOffset * 0.5) % cw; 
             for (let i = 0; i < 2; i++) {
                 let startX = fX + (i * cw);
-                // Bukit Belakang
-                ctx.fillStyle = '#689F38';
-                ctx.beginPath();
-                ctx.moveTo(startX, ch * GROUND_Y_RATIO);
-                ctx.quadraticCurveTo(startX + cw*0.5, ch * 0.55, startX + cw, ch * GROUND_Y_RATIO);
-                ctx.fill();
-                
-                // Bukit Depan (Ladang)
-                ctx.fillStyle = '#8BC34A';
-                ctx.beginPath();
-                ctx.moveTo(startX - cw*0.2, ch * GROUND_Y_RATIO);
-                ctx.quadraticCurveTo(startX + cw*0.3, ch * 0.65, startX + cw*0.8, ch * GROUND_Y_RATIO);
-                ctx.fill();
+                ctx.fillStyle = '#689F38'; ctx.beginPath(); ctx.moveTo(startX, ch * GROUND_Y_RATIO); ctx.quadraticCurveTo(startX + cw*0.5, ch * 0.55, startX + cw, ch * GROUND_Y_RATIO); ctx.fill();
+                ctx.fillStyle = '#8BC34A'; ctx.beginPath(); ctx.moveTo(startX - cw*0.2, ch * GROUND_Y_RATIO); ctx.quadraticCurveTo(startX + cw*0.3, ch * 0.65, startX + cw*0.8, ch * GROUND_Y_RATIO); ctx.fill();
             }
         }
 
-        // --- CLASSES (Character, Obstacle) ---
         class Character {
             constructor(emoji, zone) {
                 this.emoji = emoji; this.zone = zone; 
-                this.size = ch * 0.16;
-                
-                // JARAK LEBIH LEBAR AGAR TIDAK RAPET DI HP
-                // Zone 0: 20%, Zone 1: 50%, Zone 2: 80% dari layar
+                this.size = ch * 0.11; // UKURAN DIPERKECIL
                 this.baseX = cw * (0.2 + (this.zone * 0.3));
-                this.x = this.baseX;
-                
-                this.y = ch * GROUND_Y_RATIO;
+                this.x = this.baseX; this.y = ch * GROUND_Y_RATIO;
                 this.vy = 0; this.isJumping = false;
-                
-                // Hitbox dimudahkan
-                this.hitRadius = this.size * 0.25; 
+                this.hitRadius = this.size * 0.25; // Hitbox mungil
             }
-            jump() {
-                if (!this.isJumping) {
-                    this.vy = JUMP_VELOCITY; this.isJumping = true;
-                    playSFX('jump');
-                }
-            }
+            jump() { if (!this.isJumping) { this.vy = JUMP_VELOCITY; this.isJumping = true; playSFX('jump'); } }
             update(dt) {
-                this.size = ch * 0.16; this.hitRadius = this.size * 0.25;
+                this.size = ch * 0.11; this.hitRadius = this.size * 0.25;
                 this.baseX = cw * (0.2 + (this.zone * 0.3));
+                this.x = this.baseX; // TIDAK ADA LAGI EFEK MAJU KE DEPAN
+                
                 let ground = ch * GROUND_Y_RATIO;
-
                 if (this.isJumping) {
-                    this.vy += GRAVITY * dt; 
-                    this.y += this.vy * dt;
-                    
-                    // EFEK LOMPAT KE DEPAN (Maju saat di udara, mundur saat mendarat)
-                    let heightFromGround = ground - this.y;
-                    this.x = this.baseX + (heightFromGround * 0.15); // Makin tinggi makin maju
-
-                    if (this.y >= ground) {
-                        this.y = ground; this.vy = 0; this.isJumping = false;
-                        this.x = this.baseX; // Kembali ke posisi awal
-                    }
+                    this.vy += GRAVITY * dt; this.y += this.vy * dt;
+                    if (this.y >= ground) { this.y = ground; this.vy = 0; this.isJumping = false; }
                 } else {
-                    this.x = this.baseX;
                     this.y = ground;
                 }
             }
             draw(ctx) {
                 ctx.save(); ctx.translate(this.x, this.y - this.size/2);
                 ctx.font = `${this.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                
-                // Sedikit berputar jika sedang lompat agar lebih dinamis
                 if (this.isJumping) ctx.rotate(0.15); 
-                
-                ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 10;
-                ctx.fillText(this.emoji, 0, 0);
-                ctx.restore();
+                ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 10; ctx.fillText(this.emoji, 0, 0); ctx.restore();
             }
         }
 
         class Obstacle {
             constructor() {
-                this.size = ch * 0.12; this.x = cw + this.size;
-                this.y = ch * GROUND_Y_RATIO; this.hitRadius = this.size * 0.35;
+                this.size = ch * 0.09; // BATU JUGA DIPERKECIL
+                this.x = cw + this.size; this.y = ch * GROUND_Y_RATIO; 
+                this.hitRadius = this.size * 0.30;
                 this.passedBy = []; 
             }
             update(dt) { this.x -= gameSpeed * dt; }
@@ -350,73 +234,47 @@
             }
         }
 
-        // --- MAIN GAME LOOP ---
         function init() {
             characters = [new Character('🍊', 0), new Character('🌽', 1), new Character('🥕', 2)];
             obstacles = []; clouds = [new Cloud(), new Cloud()];
             score = 0; currentStage = 1; stageAnnounceTimer = 0;
-            
-            // KECEPATAN DASAR DINAIKKAN AGAR GAMEPLAY LEBIH MENGALIR
-            gameSpeed = cw * 0.6; 
-            document.getElementById('scoreDisplay').innerText = `🪙 0`;
-            document.getElementById('stageDisplay').innerText = `STAGE 1`;
+            gameSpeed = cw * 0.6; document.getElementById('scoreDisplay').innerText = `🪙 0`; document.getElementById('stageDisplay').innerText = `STAGE 1`;
             nextObstacleTime = 1500;
         }
 
         function startGame() {
             initAudio(); if (soundEnabled) bgm.play().catch(e => console.log("Audio prep"));
-            document.getElementById('ui-start').classList.add('hidden');
-            document.getElementById('ui-gameover').classList.add('hidden');
-            document.getElementById('ui-hud').style.display = 'flex';
-            init(); state = 'PLAY'; lastTime = performance.now();
-            requestAnimationFrame(gameLoop);
+            document.getElementById('ui-start').classList.add('hidden'); document.getElementById('ui-gameover').classList.add('hidden');
+            document.getElementById('ui-hud').style.display = 'flex'; init(); state = 'PLAY'; lastTime = performance.now(); requestAnimationFrame(gameLoop);
         }
 
         function gameOver() {
             state = 'GAMEOVER'; playSFX('hit'); bgm.pause();
-            document.getElementById('ui-hud').style.display = 'none';
-            document.getElementById('ui-gameover').classList.remove('hidden');
-            document.getElementById('finalScore').innerText = score;
+            document.getElementById('ui-hud').style.display = 'none'; document.getElementById('ui-gameover').classList.remove('hidden'); document.getElementById('finalScore').innerText = score;
         }
 
         function gameLoop(timestamp) {
-            if (state !== 'PLAY') return;
-            let dt = (timestamp - lastTime) / 1000;
-            if (dt > 0.1) dt = 0.1; lastTime = timestamp;
+            if (state !== 'PLAY') return; let dt = (timestamp - lastTime) / 1000; if (dt > 0.1) dt = 0.1; lastTime = timestamp;
             update(dt); draw(); requestAnimationFrame(gameLoop);
         }
 
         function update(dt) {
-            gameSpeed += dt * 2.0; // Kecepatan bertambah sangat perlahan
-            bgOffset = (bgOffset + gameSpeed * dt);
-            trackOffset = (trackOffset + gameSpeed * dt) % 160; 
-
+            gameSpeed += dt * 2.0; bgOffset = (bgOffset + gameSpeed * dt); trackOffset = (trackOffset + gameSpeed * dt) % 160; 
             if (stageAnnounceTimer > 0) stageAnnounceTimer -= dt;
 
-            // Checkpoint Stage
             let targetStage = Math.floor(score / SCORE_PER_STAGE) + 1;
             if (targetStage > currentStage) {
-                currentStage = targetStage;
-                stageAnnounceTimer = 2.0; 
-                playSFX('stageUp');
-                gameSpeed += cw * 0.05; // Tambah speed tiap stage
+                currentStage = targetStage; stageAnnounceTimer = 2.0; playSFX('stageUp'); gameSpeed += cw * 0.05;
                 document.getElementById('stageDisplay').innerText = `STAGE ${currentStage}`;
             }
 
-            // Update Awan
-            clouds.forEach(c => c.update(dt));
-            if (Math.random() < 0.005 && clouds.length < 4) clouds.push(new Cloud());
-            clouds = clouds.filter(c => c.x > -100);
-
+            clouds.forEach(c => c.update(dt)); if (Math.random() < 0.005 && clouds.length < 4) clouds.push(new Cloud()); clouds = clouds.filter(c => c.x > -100);
             characters.forEach(char => char.update(dt));
 
-            // Munculkan Batu (Jarak diperlebar agar tidak rapet)
             nextObstacleTime -= dt * 1000;
             if (nextObstacleTime <= 0) {
                 obstacles.push(new Obstacle());
-                // Waktu random batu minimal 1 detik agar pemain sempat bernapas
-                let baseWait = Math.max(1000, 1600 - (currentStage * 100)); 
-                nextObstacleTime = Math.random() * 800 + baseWait; 
+                let baseWait = Math.max(1000, 1600 - (currentStage * 100)); nextObstacleTime = Math.random() * 800 + baseWait; 
             }
 
             for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -424,10 +282,8 @@
                 characters.forEach((char, index) => {
                     let dx = char.x - obs.x, dy = (char.y - char.size/2) - (obs.y - obs.size/2);
                     if (Math.sqrt(dx*dx + dy*dy) < char.hitRadius + obs.hitRadius) gameOver();
-
                     if (obs.x < char.x && !obs.passedBy.includes(index)) {
-                        obs.passedBy.push(index); score += 5;
-                        document.getElementById('scoreDisplay').innerText = `🪙 ${score}`;
+                        obs.passedBy.push(index); score += 5; document.getElementById('scoreDisplay').innerText = `🪙 ${score}`;
                         if (obs.passedBy.length === 1) playSFX('score');
                     }
                 });
@@ -437,67 +293,32 @@
 
         function draw() {
             ctx.clearRect(0, 0, cw, ch);
-
-            // 1. Langit Dinamis
-            let colorIndex = Math.min(currentStage - 1, stageColors.length - 1);
-            let activeColor = stageColors[colorIndex];
-            let skyGrad = ctx.createLinearGradient(0, 0, 0, ch);
-            skyGrad.addColorStop(0, activeColor.top); skyGrad.addColorStop(1, activeColor.bot);
+            let colorIndex = Math.min(currentStage - 1, stageColors.length - 1), activeColor = stageColors[colorIndex];
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, ch); skyGrad.addColorStop(0, activeColor.top); skyGrad.addColorStop(1, activeColor.bot);
             ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, cw, ch);
             
-            // 2. Awan
-            clouds.forEach(c => c.draw(ctx));
-
-            // 3. Gunung & Ladang (Parallax Background)
-            drawMountains();
-            drawFields();
-
-            // 4. Trek Balap
+            clouds.forEach(c => c.draw(ctx)); drawMountains(); drawFields();
+            
             let groundY = ch * GROUND_Y_RATIO;
-            
-            // Garis pembatas ladang dan trek
             ctx.fillStyle = '#388E3C'; ctx.fillRect(0, groundY - 15, cw, 15); 
-            
-            for (let x = -trackOffset; x < cw; x += 160) {
-                ctx.fillStyle = '#FFCA28'; ctx.fillRect(x, groundY, 80, ch - groundY);
-                ctx.fillStyle = '#FF7043'; ctx.fillRect(x + 80, groundY, 80, ch - groundY);
-            }
+            for (let x = -trackOffset; x < cw; x += 160) { ctx.fillStyle = '#FFCA28'; ctx.fillRect(x, groundY, 80, ch - groundY); ctx.fillStyle = '#FF7043'; ctx.fillRect(x + 80, groundY, 80, ch - groundY); }
             ctx.fillStyle = '#4CAF50'; ctx.fillRect(0, groundY, cw, 10); 
 
-            // 5. Objek Permainan
-            obstacles.forEach(obs => obs.draw(ctx));
-            characters.forEach(char => char.draw(ctx));
+            obstacles.forEach(obs => obs.draw(ctx)); characters.forEach(char => char.draw(ctx));
 
-            // 6. Teks STAGE UP
             if (stageAnnounceTimer > 0) {
-                ctx.save();
-                let alpha = Math.min(1, stageAnnounceTimer);
-                ctx.fillStyle = `rgba(255, 235, 59, ${alpha})`;
-                ctx.font = `900 ${ch * 0.12}px Nunito`; 
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`; ctx.lineWidth = 6;
-                ctx.strokeText(`STAGE ${currentStage}!`, cw / 2, ch / 3);
-                ctx.fillText(`STAGE ${currentStage}!`, cw / 2, ch / 3);
-                ctx.restore();
+                ctx.save(); let alpha = Math.min(1, stageAnnounceTimer); ctx.fillStyle = `rgba(255, 235, 59, ${alpha})`; ctx.font = `900 ${ch * 0.12}px Nunito`; 
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`; ctx.lineWidth = 6;
+                ctx.strokeText(`STAGE ${currentStage}!`, cw / 2, ch / 3); ctx.fillText(`STAGE ${currentStage}!`, cw / 2, ch / 3); ctx.restore();
             }
         }
 
-        // Event Listeners UI Jempol
-        const btns = [
-            { el: document.getElementById('btn-orange'), id: 0 },
-            { el: document.getElementById('btn-corn'), id: 1 },
-            { el: document.getElementById('btn-carrot'), id: 2 }
-        ];
-
+        const btns = [{ el: document.getElementById('btn-orange'), id: 0 }, { el: document.getElementById('btn-corn'), id: 1 }, { el: document.getElementById('btn-carrot'), id: 2 }];
         btns.forEach(btn => {
-            btn.el.addEventListener('touchstart', (e) => {
-                e.preventDefault(); btn.el.classList.add('active-touch');
-                if (state === 'PLAY') characters[btn.id].jump();
-            }, {passive: false});
+            btn.el.addEventListener('touchstart', (e) => { e.preventDefault(); btn.el.classList.add('active-touch'); if (state === 'PLAY') characters[btn.id].jump(); }, {passive: false});
             btn.el.addEventListener('touchend', (e) => { e.preventDefault(); btn.el.classList.remove('active-touch'); });
             btn.el.addEventListener('mousedown', (e) => { if (state === 'PLAY') characters[btn.id].jump(); });
         });
-
         draw(); 
     </script>
 </body>
