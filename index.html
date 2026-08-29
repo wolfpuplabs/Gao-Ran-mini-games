@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gao Ran Racing - Premium Textured 3D</title>
+    <title>Gao Ran Racing - Mobile Optimized 3D</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap');
 
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; font-family: 'Nunito', sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
-        #game-wrapper { position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 800px; display: flex; flex-direction: column; box-shadow: 0 15px 35px rgba(0,0,0,0.9); overflow: hidden; background: #87CEEB; margin: auto; }
+        #game-wrapper { position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 850px; display: flex; flex-direction: column; box-shadow: 0 15px 35px rgba(0,0,0,0.9); overflow: hidden; background: #87CEEB; margin: auto; }
         #canvas-container { flex-grow: 1; position: relative; width: 100%; }
         #gameCanvas3D { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
 
@@ -55,15 +55,15 @@
             </div>
 
             <div class="screen-center" id="ui-start">
-                <div class="title">GAO RAN<br>PREMIUM 3D</div>
-                <div class="subtitle">Textured Edition!</div>
+                <div class="title">GAO RAN<br>ARCADE</div>
+                <div class="subtitle">Mobile Optimized Edition!</div>
                 <button class="btn-play" onclick="startGame()">MAIN</button>
             </div>
 
             <div class="screen-center hidden" id="ui-gameover">
                 <div class="title" style="color: #FF5252; text-shadow: 0 6px 0 #b71c1c, 0 10px 20px rgba(0,0,0,0.5);">NABRAK!</div>
                 <div class="subtitle" style="font-size: 26px;">Skor Akhir: <span id="finalScore">0</span></div>
-                <button class="btn-play" onclick="startGame()">COBA LAGI</button>
+                <button class="btn-play" onclick="startGame()">MAIN LAGI</button>
             </div>
         </div>
 
@@ -93,127 +93,85 @@
         let cw = container.clientWidth, ch = container.clientHeight;
         const scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB); scene.fog = new THREE.Fog(0x87CEEB, 15, 30);
         
-        // Kamera Isometrik Dinamis
+        // Kamera Pintar (Menyesuaikan Layar HP vs PC)
         const camera = new THREE.PerspectiveCamera(45, cw / ch, 0.1, 100);
-        camera.position.set(0, 6.5, 14); camera.lookAt(0, 1.5, 0);
-
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-        renderer.setSize(cw, ch); renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Batasi resolusi agar tidak lag di HP
         renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        // Pencahayaan Profesional (Hemisphere + Directional)
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6); // Cahaya langit & pantulan tanah
-        scene.add(hemiLight);
+        function updateCamera() {
+            cw = container.clientWidth; ch = container.clientHeight;
+            renderer.setSize(cw, ch);
+            camera.aspect = cw / ch;
+            
+            // JIKA LAYAR HP (PORTRAIT), ZOOM OUT KAMERA!
+            if (cw < ch) {
+                camera.position.set(0, 9, 17); // Mundur & naik agar terlihat lebar
+                camera.fov = 60; // Field of view diperlebar
+            } else {
+                camera.position.set(0, 6.5, 14); // Settingan PC/Tablet landscape
+                camera.fov = 45;
+            }
+            camera.lookAt(0, 1.5, 0);
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener('resize', updateCamera); 
+
+        // Pencahayaan
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6); scene.add(hemiLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
         dirLight.position.set(8, 15, 10); dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 1024; dirLight.shadow.mapSize.height = 1024;
-        dirLight.shadow.camera.left = -20; dirLight.shadow.camera.right = 20; dirLight.shadow.camera.top = 10; dirLight.shadow.camera.bottom = -10;
+        dirLight.shadow.mapSize.width = 512; dirLight.shadow.mapSize.height = 512;
+        dirLight.shadow.camera.left = -15; dirLight.shadow.camera.right = 15; dirLight.shadow.camera.top = 10; dirLight.shadow.camera.bottom = -10;
         scene.add(dirLight);
 
-        // --- TEKSTUR GENERATOR (PROCEDURAL CANVAS) ---
-        // Membuat gambar tekstur di memori menggunakan kode HTML5 Canvas
+        // --- TEKSTUR & MATERIAL ---
         function generateTexture(type) {
-            const size = 512; const c = document.createElement('canvas'); c.width = size; c.height = size; const ctx = c.getContext('2d');
-            
-            if (type === 'orange') {
-                ctx.fillStyle = '#FF9800'; ctx.fillRect(0,0,size,size);
-                ctx.fillStyle = '#E65100'; // Pori-pori jeruk
-                for(let i=0; i<300; i++) { ctx.beginPath(); ctx.arc(Math.random()*size, Math.random()*size, 3, 0, Math.PI*2); ctx.fill(); }
-            } 
-            else if (type === 'corn') {
-                ctx.fillStyle = '#FFF59D'; ctx.fillRect(0,0,size,size);
-                ctx.strokeStyle = '#FBC02D'; ctx.lineWidth = 4; // Biji jagung (Grid)
-                for(let i=0; i<size; i+=32) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,size); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(size,i); ctx.stroke(); }
-            }
-            else if (type === 'carrot') {
-                ctx.fillStyle = '#FF5722'; ctx.fillRect(0,0,size,size);
-                ctx.fillStyle = '#D84315'; // Garis-garis wortel
-                for(let i=0; i<size; i+=40) { ctx.fillRect(0, i, size, 4 + Math.random()*6); }
-            }
-            else if (type === 'grass') {
-                ctx.fillStyle = '#4CAF50'; ctx.fillRect(0,0,size,size);
-                ctx.fillStyle = '#388E3C'; // Bercak rumput
-                for(let i=0; i<400; i++) { ctx.fillRect(Math.random()*size, Math.random()*size, 15, 5); }
-            }
-            else if (type === 'rock') {
-                ctx.fillStyle = '#78909C'; ctx.fillRect(0,0,size,size);
-                ctx.fillStyle = '#546E7A'; // Retakan batu
-                for(let i=0; i<200; i++) { ctx.beginPath(); ctx.arc(Math.random()*size, Math.random()*size, Math.random()*15, 0, Math.PI*2); ctx.fill(); }
-            }
-
-            const tex = new THREE.CanvasTexture(c);
-            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-            return tex;
+            const size = 256; const c = document.createElement('canvas'); c.width = size; c.height = size; const ctx = c.getContext('2d');
+            if (type === 'orange') { ctx.fillStyle = '#FF9800'; ctx.fillRect(0,0,size,size); ctx.fillStyle = '#E65100'; for(let i=0; i<150; i++) { ctx.beginPath(); ctx.arc(Math.random()*size, Math.random()*size, 2, 0, Math.PI*2); ctx.fill(); } } 
+            else if (type === 'corn') { ctx.fillStyle = '#FFF59D'; ctx.fillRect(0,0,size,size); ctx.strokeStyle = '#FBC02D'; ctx.lineWidth = 3; for(let i=0; i<size; i+=24) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,size); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(size,i); ctx.stroke(); } }
+            else if (type === 'carrot') { ctx.fillStyle = '#FF5722'; ctx.fillRect(0,0,size,size); ctx.fillStyle = '#D84315'; for(let i=0; i<size; i+=30) { ctx.fillRect(0, i, size, 3 + Math.random()*4); } }
+            else if (type === 'grass') { ctx.fillStyle = '#4CAF50'; ctx.fillRect(0,0,size,size); ctx.fillStyle = '#388E3C'; for(let i=0; i<200; i++) { ctx.fillRect(Math.random()*size, Math.random()*size, 10, 4); } }
+            else if (type === 'rock') { ctx.fillStyle = '#78909C'; ctx.fillRect(0,0,size,size); ctx.fillStyle = '#546E7A'; for(let i=0; i<100; i++) { ctx.beginPath(); ctx.arc(Math.random()*size, Math.random()*size, Math.random()*10, 0, Math.PI*2); ctx.fill(); } }
+            const tex = new THREE.CanvasTexture(c); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex;
         }
 
-        const texOrange = generateTexture('orange'); const texCorn = generateTexture('corn');
-        const texCarrot = generateTexture('carrot'); const texGrass = generateTexture('grass');
-        const texRock = generateTexture('rock');
-
-        // Material dengan tekstur (Smooth shading + Roughness agar elegan)
-        const getTexMat = (tex, color=0xffffff) => new THREE.MeshStandardMaterial({ map: tex, color: color, roughness: 0.9, metalness: 0.1 });
+        const texOrange = generateTexture('orange'), texCorn = generateTexture('corn'), texCarrot = generateTexture('carrot'), texGrass = generateTexture('grass'), texRock = generateTexture('rock');
+        const getTexMat = (tex, color=0xffffff) => new THREE.MeshStandardMaterial({ map: tex, color: color, roughness: 0.9 });
         const getMat = (color) => new THREE.MeshStandardMaterial({ color: color, flatShading: true, roughness: 0.8 });
 
-        // --- LINGKUNGAN (ENVIRONMENT) ---
-        // Tanah Bertekstur
+        // --- LINGKUNGAN ---
         texGrass.repeat.set(10, 4);
-        const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 20), getTexMat(texGrass));
-        ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
-        scene.add(ground);
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 20), getTexMat(texGrass)); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+        const track = new THREE.Mesh(new THREE.PlaneGeometry(60, 3.5), getMat(0xFFCA28)); track.rotation.x = -Math.PI / 2; track.position.set(0, 0.02, 1); track.receiveShadow = true; scene.add(track);
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(60, 0.15), getMat(0xffffff)); stripe.rotation.x = -Math.PI / 2; stripe.position.set(0, 0.03, 1); scene.add(stripe);
 
-        // Track Balap
-        const trackGeo = new THREE.PlaneGeometry(60, 4);
-        const trackMat = getMat(0xFFCA28);
-        const track = new THREE.Mesh(trackGeo, trackMat);
-        track.rotation.x = -Math.PI / 2; track.position.set(0, 0.02, 1); track.receiveShadow = true;
-        scene.add(track);
-        
-        // Garis-garis lintasan (Trek)
-        const stripeGeo = new THREE.PlaneGeometry(60, 0.2);
-        const stripe = new THREE.Mesh(stripeGeo, getMat(0xffffff));
-        stripe.rotation.x = -Math.PI / 2; stripe.position.set(0, 0.03, 1);
-        scene.add(stripe);
-
-        // Gunung Latar Belakang
         const mountains = new THREE.Group();
-        const mGeo = new THREE.ConeGeometry(6, 10, 4);
-        for(let i=0; i<4; i++) {
-            let m = new THREE.Mesh(mGeo, getMat(0x90A4AE));
-            m.position.set(-20 + (i*14), 4, -10); m.rotation.y = Math.PI / 4; mountains.add(m);
-        }
+        for(let i=0; i<4; i++) { let m = new THREE.Mesh(new THREE.ConeGeometry(6, 10, 4), getMat(0x90A4AE)); m.position.set(-20 + (i*14), 4, -10); m.rotation.y = Math.PI / 4; mountains.add(m); }
         scene.add(mountains);
 
-        // --- PABRIK KARAKTER 3D (DENGAN MUKA IMUT) ---
-        // Helper: Tambahkan Muka 3D Asli
+        // --- PABRIK KARAKTER ---
         function addFace(group, yOffset, zOffset) {
-            const eyeGeo = new THREE.SphereGeometry(0.08, 16, 16);
-            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            const eyeGeo = new THREE.SphereGeometry(0.08, 8, 8); const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
             const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(-0.2, yOffset, zOffset);
             const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(0.2, yOffset, zOffset);
-            
-            // Pipi Merah
-            const blushGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 16);
-            const blushMat = new THREE.MeshBasicMaterial({ color: 0xFF5252 });
+            const blushGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 8); const blushMat = new THREE.MeshBasicMaterial({ color: 0xFF5252 });
             const blushL = new THREE.Mesh(blushGeo, blushMat); blushL.rotation.x = Math.PI/2; blushL.position.set(-0.35, yOffset-0.05, zOffset);
             const blushR = new THREE.Mesh(blushGeo, blushMat); blushR.rotation.x = Math.PI/2; blushR.position.set(0.35, yOffset-0.05, zOffset);
-
-            // Mulut senyum (Torus dibelah)
-            const mouthGeo = new THREE.TorusGeometry(0.1, 0.03, 8, 16, Math.PI);
-            const mouth = new THREE.Mesh(mouthGeo, eyeMat); mouth.rotation.z = Math.PI; mouth.position.set(0, yOffset - 0.1, zOffset + 0.05);
-
+            const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.03, 4, 8, Math.PI), eyeMat); mouth.rotation.z = Math.PI; mouth.position.set(0, yOffset - 0.1, zOffset + 0.05);
             group.add(eyeL, eyeR, blushL, blushR, mouth);
         }
 
         function createOrange3D() {
             const group = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 32), getTexMat(texOrange)); body.castShadow = true;
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), getTexMat(texOrange)); body.castShadow = true;
             const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.6, 4), getMat(0x4CAF50)); leaf.position.set(0, 0.8, 0); leaf.rotation.x = 0.5;
             group.add(body, leaf); addFace(group, 0, 0.75); return group;
         }
 
         function createCorn3D() {
             const group = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.6, 16), getTexMat(texCorn)); body.castShadow = true;
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.6, 12), getTexMat(texCorn)); body.castShadow = true;
             const huskGeo = new THREE.ConeGeometry(0.35, 1.4, 3); const huskMat = getMat(0x689F38);
             const husk1 = new THREE.Mesh(huskGeo, huskMat); husk1.position.set(0.4, -0.2, 0); husk1.rotation.z = -0.2;
             const husk2 = new THREE.Mesh(huskGeo, huskMat); husk2.position.set(-0.4, -0.2, 0); husk2.rotation.z = 0.2;
@@ -222,22 +180,22 @@
 
         function createCarrot3D() {
             const group = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.8, 16), getTexMat(texCarrot)); body.rotation.x = Math.PI; body.castShadow = true;
-            const leaf = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.7, 8), getMat(0x4CAF50)); leaf.position.set(0, 1.1, 0);
+            const body = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.8, 12), getTexMat(texCarrot)); body.rotation.x = Math.PI; body.castShadow = true;
+            const leaf = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.7, 6), getMat(0x4CAF50)); leaf.position.set(0, 1.1, 0);
             group.add(body, leaf); addFace(group, 0.1, 0.35); return group;
         }
 
-        // --- SISTEM POHON LATAR (ENVIRONMENT DETAILS) ---
+        // --- POHON LATAR ---
         class Tree3D {
             constructor() {
                 this.mesh = new THREE.Group();
-                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1), getMat(0x795548)); trunk.position.y = 0.5; trunk.castShadow = true;
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1, 6), getMat(0x795548)); trunk.position.y = 0.5; trunk.castShadow = true;
                 const leaves = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2.5, 5), getMat(0x2E7D32)); leaves.position.y = 2; leaves.castShadow = true;
                 this.mesh.add(trunk, leaves);
+                this.x = 20 + Math.random() * 10; this.z = -3 - Math.random() * 4; this.mesh.position.set(this.x, 0, this.z);
                 
-                this.x = 20 + Math.random() * 10; // Muncul di kanan layar
-                this.z = -3 - Math.random() * 4;  // Di belakang lintasan balap
-                this.mesh.position.set(this.x, 0, this.z);
+                // SKALA POHON DIPERKECIL SESUAI KARAKTER
+                this.mesh.scale.set(0.6, 0.6, 0.6); 
                 scene.add(this.mesh);
             }
             update(dt) { this.x -= gameSpeed * 0.8 * dt; this.mesh.position.x = this.x; }
@@ -245,24 +203,37 @@
         }
 
         // --- GAME LOGIC ---
-        let state = 'START', lastTime = 0, score = 0, gameSpeed = 12, nextObstacleTime = 0, currentStage = 1, timeElapsed = 0;
-        const GRAVITY = 50, JUMP_VELOCITY = 17, SCORE_PER_STAGE = 60;
+        let state = 'START', lastTime = 0, score = 0, gameSpeed = 7.5, nextObstacleTime = 0, currentStage = 1, timeElapsed = 0;
+        
+        // GRAVITASI DAN LOMPATAN DISESUAIKAN UNTUK SKALA KECIL
+        const GRAVITY = 35, JUMP_VELOCITY = 13, SCORE_PER_STAGE = 60;
 
         class Character3D {
             constructor(meshBuilder, zone, xPos) {
-                this.mesh = meshBuilder(); this.zone = zone; this.baseX = xPos;
-                this.mesh.position.set(this.baseX, 1, 1); scene.add(this.mesh);
-                this.y = 1; this.vy = 0; this.isJumping = false; this.hitRadius = 0.8; 
+                this.mesh = meshBuilder(); 
+                // MAGIC FIX: Skala diperkecil 45% agar pas di HP
+                this.mesh.scale.set(0.55, 0.55, 0.55); 
+                this.zone = zone; this.baseX = xPos;
+                
+                // Titik Y tanah untuk model yg sudah diperkecil
+                this.groundY = 0.55; 
+                this.y = this.groundY; 
+                
+                this.mesh.position.set(this.baseX, this.y, 1); scene.add(this.mesh);
+                this.vy = 0; this.isJumping = false; 
+                
+                // Hitbox sangat dimudahkan
+                this.hitRadius = 0.35; 
             }
             jump() { if (!this.isJumping) { this.vy = JUMP_VELOCITY; this.isJumping = true; playSFX('jump'); spawnParticles3D(this.mesh.position.x, 0, this.mesh.position.z, 0xffffff); } }
             update(dt) {
                 if (this.isJumping) {
                     this.vy -= GRAVITY * dt; this.y += this.vy * dt;
-                    this.mesh.scale.set(0.85, 1.15, 0.85); // Stretch
-                    if (this.y <= 1) { this.y = 1; this.vy = 0; this.isJumping = false; this.mesh.scale.set(1, 1, 1); spawnParticles3D(this.mesh.position.x, 0, this.mesh.position.z, 0xffffff); }
+                    this.mesh.scale.set(0.45, 0.65, 0.45); // Stretch proporsional
+                    if (this.y <= this.groundY) { this.y = this.groundY; this.vy = 0; this.isJumping = false; this.mesh.scale.set(0.55, 0.55, 0.55); spawnParticles3D(this.mesh.position.x, 0, this.mesh.position.z, 0xffffff); }
                 } else {
-                    this.y = 1;
-                    this.mesh.scale.set(1, 1 + Math.sin(timeElapsed * 6 + this.zone) * 0.04, 1); // Napas
+                    this.y = this.groundY;
+                    this.mesh.scale.set(0.55, 0.55 + Math.sin(timeElapsed * 6 + this.zone) * 0.02, 0.55); // Napas
                 }
                 this.mesh.position.y = this.y;
             }
@@ -270,23 +241,25 @@
 
         class Obstacle3D {
             constructor() {
-                // Batu bertekstur
-                this.mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8, 1), getTexMat(texRock)); this.mesh.castShadow = true;
-                this.x = 20; this.mesh.position.set(this.x, 0.6, 1); scene.add(this.mesh);
-                this.hitRadius = 0.75; this.passedBy = []; 
+                this.mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8, 0), getTexMat(texRock)); 
+                // Skala batu disesuaikan (Kecil)
+                this.mesh.scale.set(0.55, 0.55, 0.55);
+                this.mesh.castShadow = true;
+                
+                this.x = 20; this.mesh.position.set(this.x, 0.45, 1); scene.add(this.mesh);
+                this.hitRadius = 0.35; this.passedBy = []; 
             }
-            update(dt) { this.x -= gameSpeed * dt; this.mesh.position.x = this.x; this.mesh.rotation.z += (gameSpeed * dt) / 0.8; }
+            update(dt) { this.x -= gameSpeed * dt; this.mesh.position.x = this.x; this.mesh.rotation.z += (gameSpeed * dt) / 0.5; }
             dispose() { scene.remove(this.mesh); this.mesh.geometry.dispose(); }
         }
 
         let particles3D = [], trees = [];
-        const partGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
+        const partGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
         function spawnParticles3D(x, y, z, color) {
             const mat = new THREE.MeshBasicMaterial({ color: color });
-            for(let i=0; i<8; i++) {
-                const p = new THREE.Mesh(partGeo, mat);
-                p.position.set(x + (Math.random()-0.5), y + Math.random(), z + (Math.random()-0.5));
-                p.userData = { vx: (Math.random() - 0.5) * 6 - (gameSpeed * 0.3), vy: Math.random() * 8 + 2, vz: (Math.random() - 0.5) * 6, life: 1.0 };
+            for(let i=0; i<6; i++) {
+                const p = new THREE.Mesh(partGeo, mat); p.position.set(x + (Math.random()-0.5), y + Math.random()*0.5, z + (Math.random()-0.5));
+                p.userData = { vx: (Math.random() - 0.5) * 4 - (gameSpeed * 0.3), vy: Math.random() * 5 + 2, vz: (Math.random() - 0.5) * 4, life: 1.0 };
                 scene.add(p); particles3D.push(p);
             }
         }
@@ -299,21 +272,30 @@
         }
 
         let characters = [], obstacles = [];
-        window.addEventListener('resize', () => { cw = container.clientWidth; ch = container.clientHeight; renderer.setSize(cw, ch); camera.aspect = cw / ch; camera.updateProjectionMatrix(); });
-
+        
         function init() {
+            updateCamera(); // Setup FOV awal
+            
             obstacles.forEach(o => o.dispose()); obstacles = [];
             trees.forEach(t => t.dispose()); trees = [];
             particles3D.forEach(p => { scene.remove(p); p.material.dispose(); }); particles3D = [];
             characters.forEach(c => { scene.remove(c.mesh); }); characters = [];
             
-            characters = [ new Character3D(createOrange3D, 0, -5), new Character3D(createCorn3D, 1, -2.5), new Character3D(createCarrot3D, 2, 0) ];
+            // POSISI KARAKTER DIGESER MERAPAT KE KIRI-TENGAH (Aman dari sisi layar terpotong)
+            characters = [ 
+                new Character3D(createOrange3D, 0, -3.0), 
+                new Character3D(createCorn3D, 1, -1.0), 
+                new Character3D(createCarrot3D, 2, 1.0) 
+            ];
             
-            // Spawn Pohon awal
             for(let i=0; i<3; i++) { let t = new Tree3D(); t.x = Math.random() * 20 - 10; trees.push(t); }
 
-            score = 0; currentStage = 1; gameSpeed = 12; document.getElementById('scoreDisplay').innerText = `🪙 0`; document.getElementById('stageDisplay').innerText = `STAGE 1`;
-            scene.background.setHex(0x87CEEB); scene.fog.color.setHex(0x87CEEB); nextObstacleTime = 1.5;
+            score = 0; currentStage = 1; 
+            gameSpeed = 7.5; // KECEPATAN JAUH LEBIH LAMBAT (Balance Arcade)
+            
+            document.getElementById('scoreDisplay').innerText = `🪙 0`; document.getElementById('stageDisplay').innerText = `STAGE 1`;
+            scene.background.setHex(0x87CEEB); scene.fog.color.setHex(0x87CEEB); 
+            nextObstacleTime = 2.0; // Jeda batu pertama 2 detik
         }
 
         function startGame() {
@@ -334,20 +316,18 @@
         }
 
         function update(dt) {
-            gameSpeed += dt * 0.2; 
+            gameSpeed += dt * 0.15; // Bertambah cepat dengan sangat pelan
             
-            // Animasi Lingkungan (Tekstur tanah berjalan)
             texGrass.offset.x += (gameSpeed * 0.05) * dt;
             stripe.position.x -= gameSpeed * dt; if (stripe.position.x < -10) stripe.position.x = 0;
             mountains.position.x -= (gameSpeed * 0.1) * dt; if(mountains.position.x < -14) mountains.position.x = 0;
 
-            // Update Pohon
             if (Math.random() < 0.015) trees.push(new Tree3D());
             for (let i = trees.length - 1; i >= 0; i--) { trees[i].update(dt); if (trees[i].x < -15) { trees[i].dispose(); trees.splice(i, 1); } }
 
             let targetStage = Math.floor(score / SCORE_PER_STAGE) + 1;
             if (targetStage > currentStage) {
-                currentStage = targetStage; playSFX('stageUp'); gameSpeed += 1.5; document.getElementById('stageDisplay').innerText = `STAGE ${currentStage}`;
+                currentStage = targetStage; playSFX('stageUp'); gameSpeed += 1.0; document.getElementById('stageDisplay').innerText = `STAGE ${currentStage}`;
                 const colors = [0x87CEEB, 0xFFB74D, 0xBA68C8, 0x1A237E, 0xb71c1c];
                 let cHex = colors[Math.min(currentStage - 1, colors.length - 1)]; scene.background.setHex(cHex); scene.fog.color.setHex(cHex);
             }
@@ -355,13 +335,16 @@
             characters.forEach(char => char.update(dt));
             
             for (let i = particles3D.length - 1; i >= 0; i--) { 
-                let p = particles3D[i]; p.position.x += p.userData.vx * dt; p.position.y += p.userData.vy * dt; p.position.z += p.userData.vz * dt; p.userData.vy -= GRAVITY * 0.5 * dt; p.userData.life -= dt * 2.5; p.scale.setScalar(Math.max(0, p.userData.life));
+                let p = particles3D[i]; p.position.x += p.userData.vx * dt; p.position.y += p.userData.vy * dt; p.position.z += p.userData.vz * dt; p.userData.vy -= GRAVITY * 0.5 * dt; p.userData.life -= dt * 3.0; p.scale.setScalar(Math.max(0, p.userData.life));
                 if (p.userData.life <= 0) { scene.remove(p); p.material.dispose(); particles3D.splice(i, 1); }
             }
 
             nextObstacleTime -= dt;
             if (nextObstacleTime <= 0) {
-                obstacles.push(new Obstacle3D()); let baseWait = Math.max(0.9, 1.6 - (currentStage * 0.1)); nextObstacleTime = (Math.random() * 0.4) + baseWait; 
+                obstacles.push(new Obstacle3D()); 
+                // Jeda batu lebih manusiawi (1.2 - 1.8 detik)
+                let baseWait = Math.max(1.2, 1.8 - (currentStage * 0.1)); 
+                nextObstacleTime = (Math.random() * 0.5) + baseWait; 
             }
 
             for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -374,7 +357,7 @@
                         obs.passedBy.push(index); score += 5; document.getElementById('scoreDisplay').innerText = `🪙 ${score}`;
                         if (obs.passedBy.length === 1) {
                             playSFX('score');
-                            let pos = char.mesh.position.clone(); pos.y += 2; pos.project(camera);
+                            let pos = char.mesh.position.clone(); pos.y += 1.5; pos.project(camera);
                             createFloatingTextHTML("+15", (pos.x * .5 + .5) * cw, (pos.y * -.5 + .5) * ch);
                         }
                     }
@@ -389,6 +372,8 @@
             btn.el.addEventListener('touchend', (e) => { e.preventDefault(); btn.el.classList.remove('active-touch'); });
             btn.el.addEventListener('mousedown', (e) => { if (state === 'PLAY') characters[btn.id].jump(); });
         });
+        
+        updateCamera();
         renderer.render(scene, camera); 
     </script>
 </body>
