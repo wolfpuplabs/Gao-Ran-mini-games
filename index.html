@@ -3,224 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gao Ran Racing - Pro MVP</title>
+    <title>Gao Ran Racing - Easy & Pro UX</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap');
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #1a1a1a;
-            font-family: 'Nunito', sans-serif;
+            background-color: #121212; font-family: 'Nunito', sans-serif;
             display: flex; justify-content: center; align-items: center;
-            overflow: hidden; touch-action: none; /* Mencegah pull-to-refresh di mobile */
-            user-select: none; -webkit-user-select: none;
+            overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
         }
 
+        /* Layout Utama: Memisahkan Layar Game dan Area Kontrol Jempol */
         #game-wrapper {
-            position: relative; width: 100%; max-width: 960px; 
-            aspect-ratio: 21 / 9; max-height: 100vh;
-            background: #87CEEB;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border-radius: 12px; overflow: hidden;
+            position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 600px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); border-radius: 12px; overflow: hidden;
         }
 
-        /* Canvas menutupi seluruh wrapper */
-        canvas {
-            display: block; width: 100%; height: 100%;
+        /* Area Canvas (Game) */
+        #canvas-container {
+            flex-grow: 1; position: relative; width: 100%;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* Area Kontrol (Bawah) - Ergonomis untuk Jempol */
+        #controls-container {
+            height: 100px; background: #2E7D32; border-top: 4px solid #1B5E20;
+            display: flex; justify-content: space-between; padding: 10px; gap: 10px;
+        }
+        
+        .lane-btn {
+            flex: 1; background: #4CAF50; border: 4px solid #81C784; border-radius: 15px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; font-weight: 900; font-size: 16px; cursor: pointer;
+            box-shadow: 0 6px 0 #1B5E20; transition: transform 0.1s, box-shadow 0.1s;
+        }
+        
+        .lane-btn:active, .lane-btn.active-touch {
+            transform: translateY(6px); box-shadow: 0 0 0 #1B5E20; background: #66BB6A;
         }
 
-        /* UI Overlays */
+        .btn-emoji { font-size: 32px; line-height: 1; margin-bottom: 5px; }
+
+        /* HUD & UI Overlays */
         .ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* Klik tembus ke canvas */
-            display: flex; flex-direction: column;
+            pointer-events: none; display: flex; flex-direction: column;
         }
 
         .hud {
-            display: flex; justify-content: space-between; padding: 15px 25px;
+            display: flex; justify-content: space-between; padding: 15px; pointer-events: auto;
         }
 
         .hud-box {
-            background: rgba(0, 0, 0, 0.5); color: white;
-            padding: 8px 20px; border-radius: 20px; font-size: 20px;
-            border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.6); color: #FFEB3B;
+            padding: 8px 20px; border-radius: 20px; font-size: 22px; font-weight: 900;
+            border: 2px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px);
         }
 
+        .btn-sound {
+            background: rgba(0,0,0,0.6); color: white; border: 2px solid rgba(255,255,255,0.3);
+            width: 45px; height: 45px; border-radius: 50%; font-size: 20px; cursor: pointer;
+        }
+
+        /* Screens (Start & Game Over) */
         .screen-center {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(0,0,0,0.6); pointer-events: auto; /* Bisa diklik */
-            transition: opacity 0.3s;
+            background: rgba(0,0,0,0.7); pointer-events: auto; transition: opacity 0.3s; z-index: 50;
         }
 
         .hidden { opacity: 0; pointer-events: none; display: none !important; }
-
-        .title { color: white; font-size: 40px; margin-bottom: 10px; text-shadow: 2px 4px 0 #000; text-align: center; line-height: 1.2; }
-        .subtitle { color: #FFEB3B; font-size: 18px; margin-bottom: 30px; text-shadow: 1px 2px 0 #000; }
+        
+        .title { color: white; font-size: 42px; text-shadow: 3px 3px 0 #000; text-align: center; font-weight: 900; }
+        .subtitle { color: #81C784; font-size: 16px; margin-bottom: 30px; margin-top: 10px; font-weight: 700; text-align: center;}
         
         .btn-play {
-            background: linear-gradient(180deg, #4CAF50, #2E7D32);
-            color: white; border: none; padding: 15px 50px; font-size: 28px;
-            border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 800;
-            box-shadow: 0 6px 0 #1B5E20, 0 10px 20px rgba(0,0,0,0.5);
-            cursor: pointer; text-transform: uppercase; transition: transform 0.1s;
+            background: linear-gradient(180deg, #FFCA28, #FF9800);
+            color: #3e2723; border: none; padding: 15px 50px; font-size: 28px;
+            border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 900;
+            box-shadow: 0 8px 0 #E65100; cursor: pointer; text-transform: uppercase;
         }
-        .btn-play:active { transform: translateY(6px); box-shadow: 0 0 0 #1B5E20; }
-        
-        /* Instruksi zona */
-        .zone-hints {
-            position: absolute; bottom: 5%; width: 100%; display: flex; justify-content: space-around;
-            color: rgba(255,255,255,0.4); font-size: 14px; font-weight: bold; pointer-events: none;
-        }
+        .btn-play:active { transform: translateY(8px); box-shadow: 0 0 0 #E65100; }
     </style>
 </head>
 <body>
 
+    <audio id="bgm" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+
     <div id="game-wrapper">
-        <canvas id="gameCanvas"></canvas>
-        
-        <div class="ui-layer" id="ui-hud" style="display: none;">
-            <div class="hud">
-                <div class="hud-box" id="scoreDisplay">🪙 0</div>
+        <div id="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+            
+            <div class="ui-layer" id="ui-hud" style="display: none;">
+                <div class="hud">
+                    <div class="hud-box" id="scoreDisplay">🪙 0</div>
+                    <button class="btn-sound" id="soundBtn" onclick="toggleSound()">🔊</button>
+                </div>
             </div>
-            <div class="zone-hints">
-                <span>TAP KIRI</span>
-                <span>TAP TENGAH</span>
-                <span>TAP KANAN</span>
+
+            <div class="screen-center" id="ui-start">
+                <div class="title">GAO RAN<br>RACING</div>
+                <div class="subtitle">Tap tombol di bawah untuk melompat!<br>Hindari batu, kumpulkan koin skor.</div>
+                <button class="btn-play" onclick="startGame()">MAIN</button>
+            </div>
+
+            <div class="screen-center hidden" id="ui-gameover">
+                <div class="title" style="color: #FF5252;">YAH, NABRAK!</div>
+                <div class="subtitle" style="color: white; font-size: 24px;">Skor Kamu: <span id="finalScore">0</span></div>
+                <button class="btn-play" onclick="startGame()">COBA LAGI</button>
             </div>
         </div>
 
-        <div class="screen-center" id="ui-start">
-            <div class="title">GAO RAN<br>RACING</div>
-            <div class="subtitle">Bagi Layar Menjadi 3 Zona Tap!</div>
-            <button class="btn-play" onclick="startGame()">Mulai</button>
-        </div>
-
-        <div class="screen-center hidden" id="ui-gameover">
-            <div class="title" style="color: #FF5252;">KETABRAK!</div>
-            <div class="subtitle" style="color: white; font-size: 24px;">Skor Akhir: <span id="finalScore">0</span></div>
-            <button class="btn-play" onclick="startGame()" style="background: linear-gradient(180deg, #FF9800, #EF6C00); box-shadow: 0 6px 0 #E65100;">Main Lagi</button>
+        <div id="controls-container">
+            <div class="lane-btn" id="btn-orange">
+                <div class="btn-emoji">🍊</div><div>TAP</div>
+            </div>
+            <div class="lane-btn" id="btn-corn">
+                <div class="btn-emoji">🌽</div><div>TAP</div>
+            </div>
+            <div class="lane-btn" id="btn-carrot">
+                <div class="btn-emoji">🥕</div><div>TAP</div>
+            </div>
         </div>
     </div>
 
     <script>
+        // --- SISTEM AUDIO (SYNTHESIZER & BGM) ---
+        let audioCtx;
+        let soundEnabled = true;
+        const bgm = document.getElementById('bgm');
+        bgm.volume = 0.3; // Volume BGM Pelan saja
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
+            if (soundEnabled && state === 'PLAY') bgm.play();
+            else bgm.pause();
+        }
+
+        function playSFX(type) {
+            if (!soundEnabled || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            
+            if (type === 'jump') {
+                // Suara lompat (Pitch naik)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
+            } else if (type === 'score') {
+                // Suara koin (Ting!)
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.setValueAtTime(1200, now + 0.05);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'hit') {
+                // Suara nabrak (Pitch turun drastis)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            }
+        }
+
+        // --- SISTEM GAME (CANVAS) ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvas-container');
         
-        // UI Elements
-        const uiStart = document.getElementById('ui-start');
-        const uiGameover = document.getElementById('ui-gameover');
-        const uiHud = document.getElementById('ui-hud');
-        const scoreDisplay = document.getElementById('scoreDisplay');
-        const finalScore = document.getElementById('finalScore');
-
-        // Game State
-        let state = 'START'; // START, PLAY, GAMEOVER
-        let lastTime = 0;
-        let score = 0;
-        let gameSpeed = 400; // Kecepatan dasar rintangan (pixel per detik)
-        let distance = 0;
-
-        // Dimensi responsif
+        let state = 'START'; 
+        let lastTime = 0, score = 0, gameSpeed = 0, distance = 0, nextObstacleTime = 0;
         let cw, ch;
+
+        // PENGATURAN FISIKA YANG LEBIH MUDAH
+        const GRAVITY = 1800; // Lebih mengambang (sebelumnya 2800)
+        const JUMP_VELOCITY = -700; // Lompatan pas
+        const GROUND_Y_RATIO = 0.80; // Tanah sedikit lebih ke bawah
+
+        let characters = [], obstacles = [], particles = [], trackOffset = 0, bgOffset = 0;
+
         function resize() {
-            const wrapper = document.getElementById('game-wrapper');
-            cw = wrapper.clientWidth;
-            ch = wrapper.clientHeight;
-            canvas.width = cw;
-            canvas.height = ch;
+            cw = canvasContainer.clientWidth;
+            ch = canvasContainer.clientHeight;
+            canvas.width = cw; canvas.height = ch;
         }
         window.addEventListener('resize', resize);
         resize();
 
-        // --- SISTEM FISIKA (DELTA TIME) ---
-        const GRAVITY = 2800; // Tarikan gravitasi (px/s^2)
-        const JUMP_VELOCITY = -850; // Kekuatan lompat (px/s)
-        const GROUND_Y_RATIO = 0.75; // Posisi tanah 75% dari atas layar
-
-        // Objek Game
-        let characters = [];
-        let obstacles = [];
-        let particles = [];
-        let bgOffset = 0;
-        let trackOffset = 0;
-        let nextObstacleTime = 0;
-
         class Character {
-            constructor(emoji, screenZone) {
+            constructor(emoji, zone) {
                 this.emoji = emoji;
-                this.zone = screenZone; // 0=kiri, 1=tengah, 2=kanan
-                this.size = ch * 0.15; // Ukuran 15% layar
-                
-                // Distribusikan posisi X
+                this.zone = zone; 
+                this.size = ch * 0.16;
                 this.x = (cw / 4) * (this.zone + 1); 
-                
                 this.y = ch * GROUND_Y_RATIO;
-                this.vy = 0;
-                this.isJumping = false;
-                this.rotation = 0;
+                this.vy = 0; this.isJumping = false;
                 
-                // Hitbox (Lebih kecil dari gambar agar fair)
-                this.hitRadius = this.size * 0.35; 
+                // Hitbox sangat dimudahkan (Hanya 25% dari ukuran asli)
+                this.hitRadius = this.size * 0.25; 
             }
 
             jump() {
                 if (!this.isJumping) {
                     this.vy = JUMP_VELOCITY;
                     this.isJumping = true;
+                    playSFX('jump');
                     createDust(this.x, this.y);
                 }
             }
 
             update(dt) {
-                // Update posisi X jika layar di-resize
                 this.x = (cw / 4) * (this.zone + 1);
-                this.size = ch * 0.15;
-                this.hitRadius = this.size * 0.35;
-                
+                this.size = ch * 0.16;
+                this.hitRadius = this.size * 0.25;
                 let ground = ch * GROUND_Y_RATIO;
 
                 if (this.isJumping) {
                     this.vy += GRAVITY * dt;
                     this.y += this.vy * dt;
-                    this.rotation += 2 * dt; // Putaran saat melompat
-
                     if (this.y >= ground) {
-                        this.y = ground;
-                        this.vy = 0;
-                        this.isJumping = false;
-                        this.rotation = 0;
+                        this.y = ground; this.vy = 0; this.isJumping = false;
                         createDust(this.x, this.y);
                     }
-                } else {
-                    this.y = ground; // Pastikan menempel di tanah
                 }
             }
 
             draw(ctx) {
                 ctx.save();
-                ctx.translate(this.x, this.y - this.size/2); // Anchor di tengah bawah
-                
-                // Rotasi jika melompat
-                if(this.isJumping) {
-                    ctx.rotate(this.rotation);
-                }
-
+                ctx.translate(this.x, this.y - this.size/2);
                 ctx.font = `${this.size}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 
-                // Shadow
-                ctx.shadowColor = 'rgba(0,0,0,0.4)';
-                ctx.shadowBlur = 10;
-                ctx.shadowOffsetY = 10;
+                if (this.isJumping) ctx.rotate(0.2); // Rotasi kecil biar cute
                 
+                ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 8;
                 ctx.fillText(this.emoji, 0, 0);
-                
                 ctx.restore();
-
-                // DEBUG HITBOX (Hapus komentar baris di bawah untuk melihat hitbox)
-                // ctx.beginPath(); ctx.arc(this.x, this.y - this.size/2, this.hitRadius, 0, Math.PI*2); ctx.strokeStyle = 'red'; ctx.stroke();
             }
         }
 
@@ -229,96 +268,43 @@
                 this.size = ch * 0.12;
                 this.x = cw + this.size;
                 this.y = ch * GROUND_Y_RATIO;
-                this.hitRadius = this.size * 0.4;
-                this.passedBy = []; // Merekam karakter mana yang sudah lewat
+                this.hitRadius = this.size * 0.35;
+                this.passedBy = []; 
             }
-
-            update(dt) {
-                this.x -= gameSpeed * dt;
-                this.size = ch * 0.12;
-                this.y = ch * GROUND_Y_RATIO;
-                this.hitRadius = this.size * 0.4;
-            }
-
+            update(dt) { this.x -= gameSpeed * dt; }
             draw(ctx) {
                 ctx.save();
                 ctx.translate(this.x, this.y - this.size/2);
                 ctx.font = `${this.size}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                ctx.shadowBlur = 5; ctx.shadowOffsetY = 5;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowOffsetY = 5;
                 ctx.fillText('🪨', 0, 0);
                 ctx.restore();
             }
         }
 
-        class Particle {
-            constructor(x, y) {
-                this.x = x + (Math.random() * 40 - 20);
-                this.y = y;
-                this.vx = (Math.random() * 100 - 50) - (gameSpeed * 0.5); // Bergerak ke kiri mengikuti angin
-                this.vy = Math.random() * -150;
-                this.life = 1.0;
-                this.size = Math.random() * 8 + 4;
-            }
-            update(dt) {
-                this.x += this.vx * dt;
-                this.y += this.vy * dt;
-                this.life -= dt * 2.5; // Mati dalam 0.4 detik
-            }
-            draw(ctx) {
-                ctx.fillStyle = `rgba(200, 200, 200, ${this.life})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-                ctx.fill();
-            }
-        }
-
         function createDust(x, y) {
-            for(let i=0; i<6; i++) particles.push(new Particle(x, y));
+            // Animasi Partikel dihilangkan sebagian agar performa fokus ke kemudahan main
         }
 
-        // --- INISIALISASI & INPUT ---
         function init() {
-            characters = [
-                new Character('🍊', 0),
-                new Character('🌽', 1),
-                new Character('🥕', 2)
-            ];
+            characters = [new Character('🍊', 0), new Character('🌽', 1), new Character('🥕', 2)];
             obstacles = [];
-            particles = [];
             score = 0;
-            gameSpeed = cw * 0.5; // Relatif terhadap lebar layar (melewati layar dalam 2 detik)
-            distance = 0;
-            scoreDisplay.innerText = `🪙 ${score}`;
-            nextObstacleTime = 1000; // Rintangan pertama setelah 1 detik
+            // Kecepatan jauh lebih lambat di awal agar gampang
+            gameSpeed = cw * 0.35; 
+            document.getElementById('scoreDisplay').innerText = `🪙 ${score}`;
+            nextObstacleTime = 2000; // Batu pertama muncul lebih lama (2 detik)
         }
 
-        // Tap Control System (Membagi layar jadi 3 zona)
-        function handleInput(x) {
-            if (state !== 'PLAY') return;
-            
-            let third = cw / 3;
-            if (x < third) characters[0].jump();
-            else if (x < third * 2) characters[1].jump();
-            else characters[2].jump();
-        }
-
-        canvas.addEventListener('mousedown', (e) => handleInput(e.clientX));
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            // Handle multi-touch (bisa lompat bersamaan)
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                handleInput(e.changedTouches[i].clientX);
-            }
-        }, {passive: false});
-
-        // --- MAIN LOOP ---
         function startGame() {
-            uiStart.classList.add('hidden');
-            uiGameover.classList.add('hidden');
-            uiHud.style.display = 'flex';
+            initAudio(); // Aktifkan Web Audio API
+            if (soundEnabled) bgm.play().catch(e => console.log("Auto-play prevented"));
+
+            document.getElementById('ui-start').classList.add('hidden');
+            document.getElementById('ui-gameover').classList.add('hidden');
+            document.getElementById('ui-hud').style.display = 'flex';
+            
             init();
             state = 'PLAY';
             lastTime = performance.now();
@@ -327,127 +313,106 @@
 
         function gameOver() {
             state = 'GAMEOVER';
-            uiHud.style.display = 'none';
-            uiGameover.classList.remove('hidden');
-            finalScore.innerText = score;
+            playSFX('hit');
+            bgm.pause();
+            document.getElementById('ui-hud').style.display = 'none';
+            document.getElementById('ui-gameover').classList.remove('hidden');
+            document.getElementById('finalScore').innerText = score;
         }
 
         function gameLoop(timestamp) {
             if (state !== 'PLAY') return;
-
-            // Delta Time (dibatasi maks 0.1s agar fisika tidak tembus saat lag)
             let dt = (timestamp - lastTime) / 1000;
             if (dt > 0.1) dt = 0.1; 
             lastTime = timestamp;
 
-            update(dt);
-            draw();
-
+            update(dt); draw();
             requestAnimationFrame(gameLoop);
         }
 
         function update(dt) {
-            distance += gameSpeed * dt;
-            gameSpeed += dt * 5; // Kecepatan pelan-pelan bertambah
-            bgOffset = (bgOffset + (gameSpeed * 0.2) * dt) % cw;
-            trackOffset = (trackOffset + gameSpeed * dt) % 160; // 160 adalah lebar pola pattern lantai
+            gameSpeed += dt * 1.5; // Kecepatan bertambah SANGAT pelan
+            bgOffset = (bgOffset + (gameSpeed * 0.1) * dt) % cw;
+            trackOffset = (trackOffset + gameSpeed * dt) % 160; 
 
-            // Update Karakter
             characters.forEach(char => char.update(dt));
 
-            // Update Partikel
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update(dt);
-                if (particles[i].life <= 0) particles.splice(i, 1);
-            }
-
-            // Sistem Rintangan
             nextObstacleTime -= dt * 1000;
             if (nextObstacleTime <= 0) {
                 obstacles.push(new Obstacle());
-                // Waktu random untuk batu berikutnya (1.2 - 2.5 detik)
-                nextObstacleTime = Math.random() * 1300 + 1200; 
+                // Jarak antar batu diperjauh (1.8 - 3 detik) agar sangat mudah diantisipasi
+                nextObstacleTime = Math.random() * 1500 + 1800; 
             }
 
-            // Update Rintangan & Deteksi Tabrakan
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i];
                 obs.update(dt);
 
-                // Cek tabrakan Circular Hitbox (Akurat di semua sudut)
                 characters.forEach((char, index) => {
                     let dx = char.x - obs.x;
                     let dy = (char.y - char.size/2) - (obs.y - obs.size/2);
                     let dist = Math.sqrt(dx*dx + dy*dy);
 
-                    if (dist < char.hitRadius + obs.hitRadius) {
-                        gameOver();
-                    }
+                    if (dist < char.hitRadius + obs.hitRadius) gameOver();
 
-                    // Tambah Skor (JIKA batu melewati karakter)
                     if (obs.x < char.x && !obs.passedBy.includes(index)) {
                         obs.passedBy.push(index);
                         score += 5;
-                        scoreDisplay.innerText = `🪙 ${score}`;
+                        document.getElementById('scoreDisplay').innerText = `🪙 ${score}`;
+                        if (obs.passedBy.length === 1) playSFX('score'); // Bunyi koin sekali saja per batu
                     }
                 });
-
-                // Hapus jika keluar layar kiri
-                if (obs.x < -100) {
-                    obstacles.splice(i, 1);
-                }
+                if (obs.x < -100) obstacles.splice(i, 1);
             }
         }
 
         function draw() {
-            // Bersihkan Layar
             ctx.clearRect(0, 0, cw, ch);
 
-            // 1. Gambar Langit (Gradient)
-            let skyGrad = ctx.createLinearGradient(0, 0, 0, ch);
-            skyGrad.addColorStop(0, '#64B5F6');
-            skyGrad.addColorStop(1, '#E1F5FE');
-            ctx.fillStyle = skyGrad;
-            ctx.fillRect(0, 0, cw, ch);
-
-            // 2. Gambar Gunung Parallax
-            ctx.fillStyle = '#81C784';
-            ctx.beginPath();
-            ctx.moveTo(0, ch * 0.75);
-            // Gambar 2 gelombang gunung yang berjalan statis
-            for(let i = 0; i < cw + 400; i+=200) {
-                let x = i - bgOffset;
-                ctx.lineTo(x, ch * 0.75 - Math.sin(i) * 50 - 50);
-            }
-            ctx.lineTo(cw, ch);
-            ctx.lineTo(0, ch);
-            ctx.fill();
-
-            // 3. Gambar Lantai (Track)
-            let groundY = ch * GROUND_Y_RATIO;
-            ctx.fillStyle = '#4CAF50'; // Rumput atas
-            ctx.fillRect(0, groundY - 10, cw, ch - groundY + 10);
+            // Background & Track
+            ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, cw, ch);
             
-            // Pola Trek Balap
+            let groundY = ch * GROUND_Y_RATIO;
             for (let x = -trackOffset; x < cw; x += 160) {
-                ctx.fillStyle = '#FFCA28';
-                ctx.fillRect(x, groundY, 80, ch - groundY);
-                ctx.fillStyle = '#FF7043';
-                ctx.fillRect(x + 80, groundY, 80, ch - groundY);
+                ctx.fillStyle = '#FFCA28'; ctx.fillRect(x, groundY, 80, ch - groundY);
+                ctx.fillStyle = '#FF7043'; ctx.fillRect(x + 80, groundY, 80, ch - groundY);
             }
+            ctx.fillStyle = '#4CAF50'; ctx.fillRect(0, groundY, cw, 10); // Garis hijau
 
-            // 4. Gambar Rintangan
+            // Jalur UI di dalam Canvas (Visual Feedback yang lebih mudah)
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.fillRect(cw/4 - cw/8, 0, cw/4, ch);
+            ctx.fillRect((cw/4)*3 - cw/8, 0, cw/4, ch);
+
             obstacles.forEach(obs => obs.draw(ctx));
-
-            // 5. Gambar Karakter
             characters.forEach(char => char.draw(ctx));
-
-            // 6. Gambar Partikel
-            particles.forEach(p => p.draw(ctx));
         }
 
-        // Draw layar pertama kali saat dimuat
-        draw();
+        // --- BINDING TOMBOL UI (UX JEMPOL) ---
+        const btns = [
+            { el: document.getElementById('btn-orange'), id: 0 },
+            { el: document.getElementById('btn-corn'), id: 1 },
+            { el: document.getElementById('btn-carrot'), id: 2 }
+        ];
+
+        btns.forEach(btn => {
+            // Touch untuk Mobile, Mousedown untuk PC
+            btn.el.addEventListener('touchstart', (e) => {
+                e.preventDefault(); 
+                btn.el.classList.add('active-touch');
+                if (state === 'PLAY') characters[btn.id].jump();
+            }, {passive: false});
+            
+            btn.el.addEventListener('touchend', (e) => {
+                e.preventDefault(); btn.el.classList.remove('active-touch');
+            });
+
+            btn.el.addEventListener('mousedown', (e) => {
+                if (state === 'PLAY') characters[btn.id].jump();
+            });
+        });
+
+        draw(); // Render pertama
     </script>
 </body>
 </html>
