@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gao Ran Racing - Easy & Pro UX</title>
+    <title>Gao Ran Racing - Stages & Particles</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap');
 
@@ -14,24 +14,23 @@
             overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
         }
 
-        /* Layout Utama: Memisahkan Layar Game dan Area Kontrol Jempol */
         #game-wrapper {
             position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 600px;
             display: flex; flex-direction: column;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8); border-radius: 12px; overflow: hidden;
         }
 
-        /* Area Canvas (Game) */
         #canvas-container {
             flex-grow: 1; position: relative; width: 100%;
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
+            background: #87CEEB; /* Akan ditimpa oleh canvas */
         }
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* Area Kontrol (Bawah) - Ergonomis untuk Jempol */
+        /* Kontrol Bawah */
         #controls-container {
             height: 100px; background: #2E7D32; border-top: 4px solid #1B5E20;
             display: flex; justify-content: space-between; padding: 10px; gap: 10px;
+            z-index: 100;
         }
         
         .lane-btn {
@@ -47,20 +46,22 @@
 
         .btn-emoji { font-size: 32px; line-height: 1; margin-bottom: 5px; }
 
-        /* HUD & UI Overlays */
+        /* HUD & Layar Game Over */
         .ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; display: flex; flex-direction: column;
         }
 
-        .hud {
-            display: flex; justify-content: space-between; padding: 15px; pointer-events: auto;
-        }
+        .hud { display: flex; justify-content: space-between; padding: 15px; pointer-events: auto; }
 
         .hud-box {
             background: rgba(0, 0, 0, 0.6); color: #FFEB3B;
             padding: 8px 20px; border-radius: 20px; font-size: 22px; font-weight: 900;
             border: 2px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px);
+        }
+        
+        .hud-stage {
+            color: #fff; background: rgba(33, 150, 243, 0.7);
         }
 
         .btn-sound {
@@ -68,7 +69,6 @@
             width: 45px; height: 45px; border-radius: 50%; font-size: 20px; cursor: pointer;
         }
 
-        /* Screens (Start & Game Over) */
         .screen-center {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -101,14 +101,17 @@
             
             <div class="ui-layer" id="ui-hud" style="display: none;">
                 <div class="hud">
-                    <div class="hud-box" id="scoreDisplay">🪙 0</div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="hud-box" id="scoreDisplay">🪙 0</div>
+                        <div class="hud-box hud-stage" id="stageDisplay">STAGE 1</div>
+                    </div>
                     <button class="btn-sound" id="soundBtn" onclick="toggleSound()">🔊</button>
                 </div>
             </div>
 
             <div class="screen-center" id="ui-start">
                 <div class="title">GAO RAN<br>RACING</div>
-                <div class="subtitle">Tap tombol di bawah untuk melompat!<br>Hindari batu, kumpulkan koin skor.</div>
+                <div class="subtitle">Setiap 60 koin akan naik Stage!<br>Tap tombol di bawah untuk melompat.</div>
                 <button class="btn-play" onclick="startGame()">MAIN</button>
             </div>
 
@@ -120,24 +123,18 @@
         </div>
 
         <div id="controls-container">
-            <div class="lane-btn" id="btn-orange">
-                <div class="btn-emoji">🍊</div><div>TAP</div>
-            </div>
-            <div class="lane-btn" id="btn-corn">
-                <div class="btn-emoji">🌽</div><div>TAP</div>
-            </div>
-            <div class="lane-btn" id="btn-carrot">
-                <div class="btn-emoji">🥕</div><div>TAP</div>
-            </div>
+            <div class="lane-btn" id="btn-orange"><div class="btn-emoji">🍊</div><div>TAP</div></div>
+            <div class="lane-btn" id="btn-corn"><div class="btn-emoji">🌽</div><div>TAP</div></div>
+            <div class="lane-btn" id="btn-carrot"><div class="btn-emoji">🥕</div><div>TAP</div></div>
         </div>
     </div>
 
     <script>
-        // --- SISTEM AUDIO (SYNTHESIZER & BGM) ---
+        // --- AUDIO SYSTEM ---
         let audioCtx;
         let soundEnabled = true;
         const bgm = document.getElementById('bgm');
-        bgm.volume = 0.3; // Volume BGM Pelan saja
+        bgm.volume = 0.3;
 
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -147,116 +144,126 @@
         function toggleSound() {
             soundEnabled = !soundEnabled;
             document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
-            if (soundEnabled && state === 'PLAY') bgm.play();
-            else bgm.pause();
+            if (soundEnabled && state === 'PLAY') bgm.play(); else bgm.pause();
         }
 
         function playSFX(type) {
             if (!soundEnabled || !audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
+            osc.connect(gain); gain.connect(audioCtx.destination);
             const now = audioCtx.currentTime;
             
             if (type === 'jump') {
-                // Suara lompat (Pitch naik)
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(300, now);
-                osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
                 osc.start(now); osc.stop(now + 0.2);
             } else if (type === 'score') {
-                // Suara koin (Ting!)
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(800, now);
-                osc.frequency.setValueAtTime(1200, now + 0.05);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now); osc.frequency.setValueAtTime(1200, now + 0.05);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
                 osc.start(now); osc.stop(now + 0.3);
             } else if (type === 'hit') {
-                // Suara nabrak (Pitch turun drastis)
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, now);
-                osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
-                gain.gain.setValueAtTime(0.4, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
                 osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'stageUp') {
+                // Suara khusus naik level
+                osc.type = 'square'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
             }
         }
 
-        // --- SISTEM GAME (CANVAS) ---
+        // --- GAME SYSTEM ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const canvasContainer = document.getElementById('canvas-container');
         
-        let state = 'START'; 
-        let lastTime = 0, score = 0, gameSpeed = 0, distance = 0, nextObstacleTime = 0;
+        let state = 'START', lastTime = 0, score = 0, gameSpeed = 0, nextObstacleTime = 0;
+        let currentStage = 1, stageAnnounceTimer = 0;
         let cw, ch;
 
-        // PENGATURAN FISIKA YANG LEBIH MUDAH
-        const GRAVITY = 1800; // Lebih mengambang (sebelumnya 2800)
-        const JUMP_VELOCITY = -700; // Lompatan pas
-        const GROUND_Y_RATIO = 0.80; // Tanah sedikit lebih ke bawah
+        const GRAVITY = 1800, JUMP_VELOCITY = -700, GROUND_Y_RATIO = 0.80;
+        const SCORE_PER_STAGE = 60; // Naik level tiap 60 poin (4 batu berhasil dilewati sempurna)
+
+        // Tema Warna per Stage
+        const stageColors = [
+            { top: '#87CEEB', bot: '#E0F7FA' }, // Stage 1 (Siang Cerah)
+            { top: '#FFB74D', bot: '#FFE082' }, // Stage 2 (Sore)
+            { top: '#F06292', bot: '#F8BBD0' }, // Stage 3 (Senja Pink)
+            { top: '#5E35B1', bot: '#9575CD' }, // Stage 4 (Malam)
+            { top: '#b71c1c', bot: '#e53935' }  // Stage 5 (Hardcore)
+        ];
 
         let characters = [], obstacles = [], particles = [], trackOffset = 0, bgOffset = 0;
 
         function resize() {
-            cw = canvasContainer.clientWidth;
-            ch = canvasContainer.clientHeight;
+            cw = canvasContainer.clientWidth; ch = canvasContainer.clientHeight;
             canvas.width = cw; canvas.height = ch;
         }
-        window.addEventListener('resize', resize);
-        resize();
+        window.addEventListener('resize', resize); resize();
+
+        // --- CLASSES (Particle, Character, Obstacle) ---
+        class Particle {
+            constructor(x, y) {
+                this.x = x + (Math.random() * 20 - 10);
+                this.y = y;
+                // Partikel terlempar ke kiri mengikuti angin
+                this.vx = (Math.random() * 100 - 50) - (gameSpeed * 0.4); 
+                this.vy = Math.random() * -120;
+                this.life = 1.0;
+                this.size = Math.random() * 6 + 3;
+            }
+            update(dt) {
+                this.x += this.vx * dt; this.y += this.vy * dt;
+                this.life -= dt * 2.5; 
+            }
+            draw(ctx) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.life})`;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+            }
+        }
+
+        function createDust(x, y) {
+            // Batasi jumlah maksimal partikel agar tidak lag
+            if(particles.length < 40) { 
+                for(let i=0; i<6; i++) particles.push(new Particle(x, y));
+            }
+        }
 
         class Character {
             constructor(emoji, zone) {
-                this.emoji = emoji;
-                this.zone = zone; 
+                this.emoji = emoji; this.zone = zone; 
                 this.size = ch * 0.16;
                 this.x = (cw / 4) * (this.zone + 1); 
                 this.y = ch * GROUND_Y_RATIO;
                 this.vy = 0; this.isJumping = false;
-                
-                // Hitbox sangat dimudahkan (Hanya 25% dari ukuran asli)
                 this.hitRadius = this.size * 0.25; 
             }
-
             jump() {
                 if (!this.isJumping) {
-                    this.vy = JUMP_VELOCITY;
-                    this.isJumping = true;
+                    this.vy = JUMP_VELOCITY; this.isJumping = true;
                     playSFX('jump');
-                    createDust(this.x, this.y);
+                    createDust(this.x, this.y); // Debu saat melompat
                 }
             }
-
             update(dt) {
                 this.x = (cw / 4) * (this.zone + 1);
-                this.size = ch * 0.16;
-                this.hitRadius = this.size * 0.25;
+                this.size = ch * 0.16; this.hitRadius = this.size * 0.25;
                 let ground = ch * GROUND_Y_RATIO;
 
                 if (this.isJumping) {
-                    this.vy += GRAVITY * dt;
-                    this.y += this.vy * dt;
+                    this.vy += GRAVITY * dt; this.y += this.vy * dt;
                     if (this.y >= ground) {
                         this.y = ground; this.vy = 0; this.isJumping = false;
-                        createDust(this.x, this.y);
+                        createDust(this.x, this.y); // Debu saat mendarat
                     }
                 }
             }
-
             draw(ctx) {
-                ctx.save();
-                ctx.translate(this.x, this.y - this.size/2);
-                ctx.font = `${this.size}px Arial`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                
-                if (this.isJumping) ctx.rotate(0.2); // Rotasi kecil biar cute
-                
+                ctx.save(); ctx.translate(this.x, this.y - this.size/2);
+                ctx.font = `${this.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                if (this.isJumping) ctx.rotate(0.2); 
                 ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 8;
                 ctx.fillText(this.emoji, 0, 0);
                 ctx.restore();
@@ -265,56 +272,40 @@
 
         class Obstacle {
             constructor() {
-                this.size = ch * 0.12;
-                this.x = cw + this.size;
-                this.y = ch * GROUND_Y_RATIO;
-                this.hitRadius = this.size * 0.35;
+                this.size = ch * 0.12; this.x = cw + this.size;
+                this.y = ch * GROUND_Y_RATIO; this.hitRadius = this.size * 0.35;
                 this.passedBy = []; 
             }
             update(dt) { this.x -= gameSpeed * dt; }
             draw(ctx) {
-                ctx.save();
-                ctx.translate(this.x, this.y - this.size/2);
-                ctx.font = `${this.size}px Arial`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowOffsetY = 5;
-                ctx.fillText('🪨', 0, 0);
-                ctx.restore();
+                ctx.save(); ctx.translate(this.x, this.y - this.size/2);
+                ctx.font = `${this.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowOffsetY = 5; ctx.fillText('🪨', 0, 0); ctx.restore();
             }
         }
 
-        function createDust(x, y) {
-            // Animasi Partikel dihilangkan sebagian agar performa fokus ke kemudahan main
-        }
-
+        // --- MAIN GAME LOOP ---
         function init() {
             characters = [new Character('🍊', 0), new Character('🌽', 1), new Character('🥕', 2)];
-            obstacles = [];
-            score = 0;
-            // Kecepatan jauh lebih lambat di awal agar gampang
+            obstacles = []; particles = [];
+            score = 0; currentStage = 1; stageAnnounceTimer = 0;
             gameSpeed = cw * 0.35; 
-            document.getElementById('scoreDisplay').innerText = `🪙 ${score}`;
-            nextObstacleTime = 2000; // Batu pertama muncul lebih lama (2 detik)
+            document.getElementById('scoreDisplay').innerText = `🪙 0`;
+            document.getElementById('stageDisplay').innerText = `STAGE 1`;
+            nextObstacleTime = 2000;
         }
 
         function startGame() {
-            initAudio(); // Aktifkan Web Audio API
-            if (soundEnabled) bgm.play().catch(e => console.log("Auto-play prevented"));
-
+            initAudio(); if (soundEnabled) bgm.play().catch(e => console.log("Audio prep"));
             document.getElementById('ui-start').classList.add('hidden');
             document.getElementById('ui-gameover').classList.add('hidden');
             document.getElementById('ui-hud').style.display = 'flex';
-            
-            init();
-            state = 'PLAY';
-            lastTime = performance.now();
+            init(); state = 'PLAY'; lastTime = performance.now();
             requestAnimationFrame(gameLoop);
         }
 
         function gameOver() {
-            state = 'GAMEOVER';
-            playSFX('hit');
-            bgm.pause();
+            state = 'GAMEOVER'; playSFX('hit'); bgm.pause();
             document.getElementById('ui-hud').style.display = 'none';
             document.getElementById('ui-gameover').classList.remove('hidden');
             document.getElementById('finalScore').innerText = score;
@@ -323,43 +314,51 @@
         function gameLoop(timestamp) {
             if (state !== 'PLAY') return;
             let dt = (timestamp - lastTime) / 1000;
-            if (dt > 0.1) dt = 0.1; 
-            lastTime = timestamp;
-
-            update(dt); draw();
-            requestAnimationFrame(gameLoop);
+            if (dt > 0.1) dt = 0.1; lastTime = timestamp;
+            update(dt); draw(); requestAnimationFrame(gameLoop);
         }
 
         function update(dt) {
-            gameSpeed += dt * 1.5; // Kecepatan bertambah SANGAT pelan
+            gameSpeed += dt * 1.0; 
             bgOffset = (bgOffset + (gameSpeed * 0.1) * dt) % cw;
             trackOffset = (trackOffset + gameSpeed * dt) % 160; 
 
+            // Timer Pengumuman Stage
+            if (stageAnnounceTimer > 0) stageAnnounceTimer -= dt;
+
+            // Checkpoint System (Naik Level)
+            let targetStage = Math.floor(score / SCORE_PER_STAGE) + 1;
+            if (targetStage > currentStage) {
+                currentStage = targetStage;
+                stageAnnounceTimer = 2.5; // Tampilkan teks selama 2.5 detik
+                playSFX('stageUp');
+                gameSpeed += 50; // Langsung tambah kecepatan sediki setiap naik stage
+                document.getElementById('stageDisplay').innerText = `STAGE ${currentStage}`;
+            }
+
             characters.forEach(char => char.update(dt));
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update(dt); if (particles[i].life <= 0) particles.splice(i, 1);
+            }
 
             nextObstacleTime -= dt * 1000;
             if (nextObstacleTime <= 0) {
                 obstacles.push(new Obstacle());
-                // Jarak antar batu diperjauh (1.8 - 3 detik) agar sangat mudah diantisipasi
-                nextObstacleTime = Math.random() * 1500 + 1800; 
+                // Jeda batu bergantung pada Stage (semakin tinggi stage, jeda makin cepat)
+                let baseWait = Math.max(800, 1800 - (currentStage * 150)); 
+                nextObstacleTime = Math.random() * 1000 + baseWait; 
             }
 
             for (let i = obstacles.length - 1; i >= 0; i--) {
-                let obs = obstacles[i];
-                obs.update(dt);
-
+                let obs = obstacles[i]; obs.update(dt);
                 characters.forEach((char, index) => {
-                    let dx = char.x - obs.x;
-                    let dy = (char.y - char.size/2) - (obs.y - obs.size/2);
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-
-                    if (dist < char.hitRadius + obs.hitRadius) gameOver();
+                    let dx = char.x - obs.x, dy = (char.y - char.size/2) - (obs.y - obs.size/2);
+                    if (Math.sqrt(dx*dx + dy*dy) < char.hitRadius + obs.hitRadius) gameOver();
 
                     if (obs.x < char.x && !obs.passedBy.includes(index)) {
-                        obs.passedBy.push(index);
-                        score += 5;
+                        obs.passedBy.push(index); score += 5;
                         document.getElementById('scoreDisplay').innerText = `🪙 ${score}`;
-                        if (obs.passedBy.length === 1) playSFX('score'); // Bunyi koin sekali saja per batu
+                        if (obs.passedBy.length === 1) playSFX('score');
                     }
                 });
                 if (obs.x < -100) obstacles.splice(i, 1);
@@ -369,26 +368,51 @@
         function draw() {
             ctx.clearRect(0, 0, cw, ch);
 
-            // Background & Track
-            ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, cw, ch);
+            // 1. Gambar Langit Dinamis Sesuai Stage
+            let colorIndex = Math.min(currentStage - 1, stageColors.length - 1);
+            let activeColor = stageColors[colorIndex];
             
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, ch);
+            skyGrad.addColorStop(0, activeColor.top);
+            skyGrad.addColorStop(1, activeColor.bot);
+            ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, cw, ch);
+            
+            // 2. Trek Balap
             let groundY = ch * GROUND_Y_RATIO;
             for (let x = -trackOffset; x < cw; x += 160) {
                 ctx.fillStyle = '#FFCA28'; ctx.fillRect(x, groundY, 80, ch - groundY);
                 ctx.fillStyle = '#FF7043'; ctx.fillRect(x + 80, groundY, 80, ch - groundY);
             }
-            ctx.fillStyle = '#4CAF50'; ctx.fillRect(0, groundY, cw, 10); // Garis hijau
+            ctx.fillStyle = '#4CAF50'; ctx.fillRect(0, groundY, cw, 10); 
 
-            // Jalur UI di dalam Canvas (Visual Feedback yang lebih mudah)
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';
-            ctx.fillRect(cw/4 - cw/8, 0, cw/4, ch);
-            ctx.fillRect((cw/4)*3 - cw/8, 0, cw/4, ch);
+            // Garis transparan UI di canvas
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.fillRect(cw/4 - cw/8, 0, cw/4, ch); ctx.fillRect((cw/4)*3 - cw/8, 0, cw/4, ch);
 
+            // 3. Objek Permainan
             obstacles.forEach(obs => obs.draw(ctx));
             characters.forEach(char => char.draw(ctx));
+            particles.forEach(p => p.draw(ctx));
+
+            // 4. Notifikasi Animasi "STAGE UP"
+            if (stageAnnounceTimer > 0) {
+                ctx.save();
+                // Efek fade-in & fade-out transisi
+                let alpha = Math.min(1, stageAnnounceTimer);
+                ctx.fillStyle = `rgba(255, 235, 59, ${alpha})`;
+                ctx.font = `900 ${ch * 0.12}px Nunito`; // Ukuran besar di tengah layar
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                
+                // Outline tulisan
+                ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
+                ctx.lineWidth = 6;
+                ctx.strokeText(`STAGE ${currentStage}!`, cw / 2, ch / 3);
+                ctx.fillText(`STAGE ${currentStage}!`, cw / 2, ch / 3);
+                ctx.restore();
+            }
         }
 
-        // --- BINDING TOMBOL UI (UX JEMPOL) ---
+        // Event Listeners UI Jempol
         const btns = [
             { el: document.getElementById('btn-orange'), id: 0 },
             { el: document.getElementById('btn-corn'), id: 1 },
@@ -396,23 +420,15 @@
         ];
 
         btns.forEach(btn => {
-            // Touch untuk Mobile, Mousedown untuk PC
             btn.el.addEventListener('touchstart', (e) => {
-                e.preventDefault(); 
-                btn.el.classList.add('active-touch');
+                e.preventDefault(); btn.el.classList.add('active-touch');
                 if (state === 'PLAY') characters[btn.id].jump();
             }, {passive: false});
-            
-            btn.el.addEventListener('touchend', (e) => {
-                e.preventDefault(); btn.el.classList.remove('active-touch');
-            });
-
-            btn.el.addEventListener('mousedown', (e) => {
-                if (state === 'PLAY') characters[btn.id].jump();
-            });
+            btn.el.addEventListener('touchend', (e) => { e.preventDefault(); btn.el.classList.remove('active-touch'); });
+            btn.el.addEventListener('mousedown', (e) => { if (state === 'PLAY') characters[btn.id].jump(); });
         });
 
-        draw(); // Render pertama
+        draw(); 
     </script>
 </body>
 </html>
