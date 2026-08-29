@@ -3,95 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gao Ran Racing - 3D Low Poly Arcade</title>
+    <title>Gao Ran Racing - Premium Textured 3D</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap');
 
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #000; font-family: 'Nunito', sans-serif;
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
-        }
-
-        #game-wrapper {
-            position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 800px;
-            display: flex; flex-direction: column;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.9); overflow: hidden;
-            background: #87CEEB; /* Warna langit jika 3D loading lambat */
-        }
-
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; font-family: 'Nunito', sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+        #game-wrapper { position: relative; width: 100%; max-width: 960px; height: 100%; max-height: 800px; display: flex; flex-direction: column; box-shadow: 0 15px 35px rgba(0,0,0,0.9); overflow: hidden; background: #87CEEB; margin: auto; }
         #canvas-container { flex-grow: 1; position: relative; width: 100%; }
-        
-        /* 3D Canvas diatur mutlak di belakang UI */
         #gameCanvas3D { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
 
-        /* --- PRO UI SYSTEM (Sama, tapi diperhalus) --- */
-        #controls-container {
-            height: 110px; background: linear-gradient(to bottom, #2E7D32, #1B5E20);
-            border-top: 5px solid #4CAF50;
-            display: flex; justify-content: space-between; padding: 12px 16px; gap: 15px; z-index: 100;
-        }
-        
-        .lane-btn {
-            flex: 1; background: linear-gradient(to bottom, #66BB6A, #4CAF50);
-            border: 3px solid #A5D6A7; border-radius: 18px;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white; font-weight: 900; font-size: 16px; cursor: pointer;
-            box-shadow: 0 8px 0 #1B5E20, 0 10px 15px rgba(0,0,0,0.3); 
-            transition: transform 0.05s, box-shadow 0.05s;
-        }
-        
-        .lane-btn:active, .lane-btn.active-touch {
-            transform: translateY(8px); box-shadow: 0 0 0 #1B5E20, 0 0 0 rgba(0,0,0,0); 
-            background: linear-gradient(to bottom, #81C784, #66BB6A);
-        }
-
+        /* UI SYSTEM */
+        #controls-container { height: 110px; background: linear-gradient(to bottom, #2E7D32, #1B5E20); border-top: 5px solid #4CAF50; display: flex; justify-content: space-between; padding: 12px 16px; gap: 15px; z-index: 100; }
+        .lane-btn { flex: 1; background: linear-gradient(to bottom, #66BB6A, #4CAF50); border: 3px solid #A5D6A7; border-radius: 18px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-weight: 900; font-size: 16px; cursor: pointer; box-shadow: 0 8px 0 #1B5E20, 0 10px 15px rgba(0,0,0,0.3); transition: transform 0.05s, box-shadow 0.05s; }
+        .lane-btn:active, .lane-btn.active-touch { transform: translateY(8px); box-shadow: 0 0 0 #1B5E20, 0 0 0 rgba(0,0,0,0); background: linear-gradient(to bottom, #81C784, #66BB6A); }
         .btn-emoji { font-size: 34px; line-height: 1; margin-bottom: 2px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
 
         .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; z-index: 10; }
         .hud { display: flex; justify-content: space-between; padding: 20px; pointer-events: auto; }
+        .hud-box { background: rgba(0, 0, 0, 0.4); color: #FFF; padding: 8px 24px; border-radius: 30px; font-size: 24px; font-weight: 900; border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(8px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; text-shadow: 1px 2px 0 #000; }
+        .hud-stage { color: #fff; background: rgba(33, 150, 243, 0.6); }
+        .btn-sound { background: rgba(0,0,0,0.4); color: white; border: 2px solid rgba(255,255,255,0.15); width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer; backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; }
 
-        .hud-box {
-            background: rgba(0, 0, 0, 0.3); color: #FFF;
-            padding: 8px 24px; border-radius: 30px; font-size: 24px; font-weight: 900;
-            border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(8px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; text-shadow: 1px 2px 0 #000;
-        }
-        .hud-stage { color: #fff; background: rgba(33, 150, 243, 0.5); }
-
-        .btn-sound {
-            background: rgba(0,0,0,0.4); color: white; border: 2px solid rgba(255,255,255,0.15);
-            width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer;
-            backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center;
-        }
-
-        .screen-center {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(10, 15, 25, 0.75); pointer-events: auto; transition: opacity 0.4s; z-index: 50; backdrop-filter: blur(5px);
-        }
-
+        .screen-center { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(10, 15, 25, 0.75); pointer-events: auto; transition: opacity 0.4s; z-index: 50; backdrop-filter: blur(5px); }
         .hidden { opacity: 0; pointer-events: none; display: none !important; }
-        
         .title { color: white; font-size: 52px; text-shadow: 0 6px 0 #2E7D32, 0 10px 20px rgba(0,0,0,0.5); text-align: center; font-weight: 900; line-height: 1.1; letter-spacing: 2px; }
         .subtitle { color: #fff; background: rgba(255, 152, 0, 0.9); padding: 8px 20px; border-radius: 25px; font-size: 16px; margin: 25px 0 35px 0; font-weight: 900; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
-        
-        .btn-play {
-            background: linear-gradient(to bottom, #FFD54F, #FF9800); color: #3e2723; border: 4px solid #fff; padding: 15px 70px; font-size: 32px;
-            border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 900;
-            box-shadow: 0 8px 0 #E65100, 0 15px 25px rgba(0,0,0,0.4); cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.1s, box-shadow 0.1s;
-        }
+        .btn-play { background: linear-gradient(to bottom, #FFD54F, #FF9800); color: #3e2723; border: 4px solid #fff; padding: 15px 70px; font-size: 32px; border-radius: 50px; font-family: 'Nunito', sans-serif; font-weight: 900; box-shadow: 0 8px 0 #E65100, 0 15px 25px rgba(0,0,0,0.4); cursor: pointer; text-transform: uppercase; transition: transform 0.1s, box-shadow 0.1s; }
         .btn-play:active { transform: translateY(8px); box-shadow: 0 0 0 #E65100, 0 0 0 rgba(0,0,0,0); }
-        
-        /* Floating text style (HTML Overlay for points) */
-        .floating-text {
-            position: absolute; font-size: 28px; font-weight: 900; color: #FFEB3B;
-            text-shadow: 0 3px 0 #000, 0 5px 10px rgba(0,0,0,0.5); pointer-events: none;
-            transition: transform 0.8s ease-out, opacity 0.8s ease-out; z-index: 20;
-        }
+        .floating-text { position: absolute; font-size: 28px; font-weight: 900; color: #FFEB3B; text-shadow: 0 3px 0 #000, 0 5px 10px rgba(0,0,0,0.5); pointer-events: none; transition: transform 0.8s ease-out, opacity 0.8s ease-out; z-index: 20; }
     </style>
 </head>
 <body>
@@ -114,8 +55,8 @@
             </div>
 
             <div class="screen-center" id="ui-start">
-                <div class="title">GAO RAN<br>3D RACING</div>
-                <div class="subtitle">Arcade Low Poly Edition!</div>
+                <div class="title">GAO RAN<br>PREMIUM 3D</div>
+                <div class="subtitle">Textured Edition!</div>
                 <button class="btn-play" onclick="startGame()">MAIN</button>
             </div>
 
@@ -134,174 +75,194 @@
     </div>
 
     <script>
-        // --- AUDIO SYSTEM (Retained for 0 dependencies) ---
-        let audioCtx, soundEnabled = true;
-        const bgm = document.getElementById('bgm'); bgm.volume = 0.25;
+        // --- AUDIO SYSTEM ---
+        let audioCtx, soundEnabled = true; const bgm = document.getElementById('bgm'); bgm.volume = 0.25;
         function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
         function toggleSound() { soundEnabled = !soundEnabled; document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇'; if (soundEnabled && state === 'PLAY') bgm.play(); else bgm.pause(); }
         function playSFX(type) {
             if (!soundEnabled || !audioCtx) return;
-            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
-            
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
             if (type === 'jump') { osc.type = 'sine'; osc.frequency.setValueAtTime(450, now); osc.frequency.exponentialRampToValueAtTime(900, now + 0.15); gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15); osc.start(now); osc.stop(now + 0.15); }
             else if (type === 'score') { osc.type = 'square'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1800, now + 0.05); gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2); osc.start(now); osc.stop(now + 0.2); }
             else if (type === 'hit') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(30, now + 0.3); gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
             else if (type === 'stageUp') { osc.type = 'square'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5); osc.start(now); osc.stop(now + 0.5); }
         }
 
-        // --- 3D ENGINE (THREE.JS) SETUP ---
-        const canvas = document.getElementById('gameCanvas3D');
-        const container = document.getElementById('canvas-container');
+        // --- THREE.JS SETUP ---
+        const canvas = document.getElementById('gameCanvas3D'), container = document.getElementById('canvas-container');
         let cw = container.clientWidth, ch = container.clientHeight;
-
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Langit siang
-        scene.fog = new THREE.Fog(0x87CEEB, 15, 30); // Efek kabut di ujung jalan
-
-        // Kamera (Side-scrolling sedikit miring ke bawah/isometrik)
+        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB); scene.fog = new THREE.Fog(0x87CEEB, 15, 30);
+        
+        // Kamera Isometrik Dinamis
         const camera = new THREE.PerspectiveCamera(45, cw / ch, 0.1, 100);
-        camera.position.set(0, 6, 16);
-        camera.lookAt(0, 2, 0);
+        camera.position.set(0, 6.5, 14); camera.lookAt(0, 1.5, 0);
 
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-        renderer.setSize(cw, ch);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setSize(cw, ch); renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        // Pencahayaan Vibe Arcade (Terang & Punya Bayangan Jelas)
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Cahaya merata
-        scene.add(ambientLight);
-
+        // Pencahayaan Profesional (Hemisphere + Directional)
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6); // Cahaya langit & pantulan tanah
+        scene.add(hemiLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
-        dirLight.position.set(5, 15, 10);
-        dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 1024;
-        dirLight.shadow.mapSize.height = 1024;
-        dirLight.shadow.camera.left = -15; dirLight.shadow.camera.right = 15;
-        dirLight.shadow.camera.top = 10; dirLight.shadow.camera.bottom = -10;
+        dirLight.position.set(8, 15, 10); dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024; dirLight.shadow.mapSize.height = 1024;
+        dirLight.shadow.camera.left = -20; dirLight.shadow.camera.right = 20; dirLight.shadow.camera.top = 10; dirLight.shadow.camera.bottom = -10;
         scene.add(dirLight);
 
-        // --- 3D ASSET GENERATOR (PROSEDURAL LOW POLY) ---
-        // Material Low Poly Dasar
+        // --- TEKSTUR GENERATOR (PROCEDURAL CANVAS) ---
+        // Membuat gambar tekstur di memori menggunakan kode HTML5 Canvas
+        function generateTexture(type) {
+            const size = 512; const c = document.createElement('canvas'); c.width = size; c.height = size; const ctx = c.getContext('2d');
+            
+            if (type === 'orange') {
+                ctx.fillStyle = '#FF9800'; ctx.fillRect(0,0,size,size);
+                ctx.fillStyle = '#E65100'; // Pori-pori jeruk
+                for(let i=0; i<300; i++) { ctx.beginPath(); ctx.arc(Math.random()*size, Math.random()*size, 3, 0, Math.PI*2); ctx.fill(); }
+            } 
+            else if (type === 'corn') {
+                ctx.fillStyle = '#FFF59D'; ctx.fillRect(0,0,size,size);
+                ctx.strokeStyle = '#FBC02D'; ctx.lineWidth = 4; // Biji jagung (Grid)
+                for(let i=0; i<size; i+=32) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,size); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(size,i); ctx.stroke(); }
+            }
+            else if (type === 'carrot') {
+                ctx.fillStyle = '#FF5722'; ctx.fillRect(0,0,size,size);
+                ctx.fillStyle = '#D84315'; // Garis-garis wortel
+                for(let i=0; i<size; i+=40) { ctx.fillRect(0, i, size, 4 + Math.random()*6); }
+            }
+            else if (type === 'grass') {
+                ctx.fillStyle = '#4CAF50'; ctx.fillRect(0,0,size,size);
+                ctx.fillStyle = '#388E3C'; // Bercak rumput
+                for(let i=0; i<400; i++) { ctx.fillRect(Math.random()*size, Math.random()*size, 15, 5); }
+            }
+            else if (type === 'rock') {
+                ctx.fillStyle = '#78909C'; ctx.fillRect(0,0,size,size);
+                ctx.fillStyle = '#546E7A'; // Retakan batu
+                for(let i=0; i<200; i++) { ctx.beginPath(); ctx.arc(Math.random()*size, Math.random()*size, Math.random()*15, 0, Math.PI*2); ctx.fill(); }
+            }
+
+            const tex = new THREE.CanvasTexture(c);
+            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+
+        const texOrange = generateTexture('orange'); const texCorn = generateTexture('corn');
+        const texCarrot = generateTexture('carrot'); const texGrass = generateTexture('grass');
+        const texRock = generateTexture('rock');
+
+        // Material dengan tekstur (Smooth shading + Roughness agar elegan)
+        const getTexMat = (tex, color=0xffffff) => new THREE.MeshStandardMaterial({ map: tex, color: color, roughness: 0.9, metalness: 0.1 });
         const getMat = (color) => new THREE.MeshStandardMaterial({ color: color, flatShading: true, roughness: 0.8 });
 
-        // 1. Lingkungan (Tanah & Gunung)
-        const groundGeo = new THREE.BoxGeometry(40, 2, 10);
-        const groundMat = getMat(0x4CAF50);
-        const ground = new THREE.Mesh(groundGeo, groundMat);
-        ground.position.y = -1; // Permukaan tanah ada di Y=0
-        ground.receiveShadow = true;
+        // --- LINGKUNGAN (ENVIRONMENT) ---
+        // Tanah Bertekstur
+        texGrass.repeat.set(10, 4);
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 20), getTexMat(texGrass));
+        ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
         scene.add(ground);
 
-        // Trek Belang-belang
-        const trackGeo = new THREE.BoxGeometry(40, 0.1, 3.5);
+        // Track Balap
+        const trackGeo = new THREE.PlaneGeometry(60, 4);
         const trackMat = getMat(0xFFCA28);
         const track = new THREE.Mesh(trackGeo, trackMat);
-        track.position.set(0, 0.01, 1); // Sedikit di atas tanah
-        track.receiveShadow = true;
+        track.rotation.x = -Math.PI / 2; track.position.set(0, 0.02, 1); track.receiveShadow = true;
         scene.add(track);
+        
+        // Garis-garis lintasan (Trek)
+        const stripeGeo = new THREE.PlaneGeometry(60, 0.2);
+        const stripe = new THREE.Mesh(stripeGeo, getMat(0xffffff));
+        stripe.rotation.x = -Math.PI / 2; stripe.position.set(0, 0.03, 1);
+        scene.add(stripe);
 
-        // Gunung Parallax Belakang
+        // Gunung Latar Belakang
         const mountains = new THREE.Group();
-        const mGeo = new THREE.ConeGeometry(5, 8, 4); // Gunung prisma segi-4
-        const mMat = getMat(0x90A4AE);
-        for(let i=0; i<3; i++) {
-            let m = new THREE.Mesh(mGeo, mMat);
-            m.position.set(-15 + (i*15), 3, -8);
-            m.rotation.y = Math.PI / 4;
-            mountains.add(m);
+        const mGeo = new THREE.ConeGeometry(6, 10, 4);
+        for(let i=0; i<4; i++) {
+            let m = new THREE.Mesh(mGeo, getMat(0x90A4AE));
+            m.position.set(-20 + (i*14), 4, -10); m.rotation.y = Math.PI / 4; mountains.add(m);
         }
         scene.add(mountains);
 
-        // 2. Pabrik Karakter (Membuat mesh 3D dari kode murni)
+        // --- PABRIK KARAKTER 3D (DENGAN MUKA IMUT) ---
+        // Helper: Tambahkan Muka 3D Asli
+        function addFace(group, yOffset, zOffset) {
+            const eyeGeo = new THREE.SphereGeometry(0.08, 16, 16);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(-0.2, yOffset, zOffset);
+            const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(0.2, yOffset, zOffset);
+            
+            // Pipi Merah
+            const blushGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 16);
+            const blushMat = new THREE.MeshBasicMaterial({ color: 0xFF5252 });
+            const blushL = new THREE.Mesh(blushGeo, blushMat); blushL.rotation.x = Math.PI/2; blushL.position.set(-0.35, yOffset-0.05, zOffset);
+            const blushR = new THREE.Mesh(blushGeo, blushMat); blushR.rotation.x = Math.PI/2; blushR.position.set(0.35, yOffset-0.05, zOffset);
+
+            // Mulut senyum (Torus dibelah)
+            const mouthGeo = new THREE.TorusGeometry(0.1, 0.03, 8, 16, Math.PI);
+            const mouth = new THREE.Mesh(mouthGeo, eyeMat); mouth.rotation.z = Math.PI; mouth.position.set(0, yOffset - 0.1, zOffset + 0.05);
+
+            group.add(eyeL, eyeR, blushL, blushR, mouth);
+        }
+
         function createOrange3D() {
             const group = new THREE.Group();
-            // Jeruk (Sphere poligon rendah)
-            const body = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8, 1), getMat(0xFF9800));
-            body.castShadow = true;
-            // Daun (Cone kecil)
-            const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 4), getMat(0x4CAF50));
-            leaf.position.set(0, 0.8, 0); leaf.rotation.x = 0.5;
-            group.add(body, leaf);
-            return group;
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 32), getTexMat(texOrange)); body.castShadow = true;
+            const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.6, 4), getMat(0x4CAF50)); leaf.position.set(0, 0.8, 0); leaf.rotation.x = 0.5;
+            group.add(body, leaf); addFace(group, 0, 0.75); return group;
         }
 
         function createCorn3D() {
             const group = new THREE.Group();
-            // Badan Jagung (Silinder segi 6)
-            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.6, 6), getMat(0xFFEB3B));
-            body.castShadow = true;
-            // Kulit Jagung Kiri Kanan
-            const huskGeo = new THREE.ConeGeometry(0.3, 1.2, 3);
-            const huskMat = getMat(0x689F38);
-            const husk1 = new THREE.Mesh(huskGeo, huskMat); husk1.position.set(0.4, -0.2, 0); husk1.rotation.z = -0.3;
-            const husk2 = new THREE.Mesh(huskGeo, huskMat); husk2.position.set(-0.4, -0.2, 0); husk2.rotation.z = 0.3;
-            group.add(body, husk1, husk2);
-            return group;
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.6, 16), getTexMat(texCorn)); body.castShadow = true;
+            const huskGeo = new THREE.ConeGeometry(0.35, 1.4, 3); const huskMat = getMat(0x689F38);
+            const husk1 = new THREE.Mesh(huskGeo, huskMat); husk1.position.set(0.4, -0.2, 0); husk1.rotation.z = -0.2;
+            const husk2 = new THREE.Mesh(huskGeo, huskMat); husk2.position.set(-0.4, -0.2, 0); husk2.rotation.z = 0.2;
+            group.add(body, husk1, husk2); addFace(group, 0.2, 0.4); return group;
         }
 
         function createCarrot3D() {
             const group = new THREE.Group();
-            // Wortel (Kerucut terbalik)
-            const body = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.8, 5), getMat(0xFF5722));
-            body.rotation.x = Math.PI; // Balik
-            body.castShadow = true;
-            // Daun Atas
-            const leaf = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.6, 4), getMat(0x4CAF50));
-            leaf.position.set(0, 1.1, 0);
-            group.add(body, leaf);
-            return group;
+            const body = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.8, 16), getTexMat(texCarrot)); body.rotation.x = Math.PI; body.castShadow = true;
+            const leaf = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.7, 8), getMat(0x4CAF50)); leaf.position.set(0, 1.1, 0);
+            group.add(body, leaf); addFace(group, 0.1, 0.35); return group;
         }
 
-        // --- GAME LOGIC & PHYSICS ---
-        let state = 'START', lastTime = 0, score = 0, gameSpeed = 10, nextObstacleTime = 0, currentStage = 1, timeElapsed = 0;
-        
-        const GRAVITY = 50; 
-        const JUMP_VELOCITY = 18; 
-        const SCORE_PER_STAGE = 60;
+        // --- SISTEM POHON LATAR (ENVIRONMENT DETAILS) ---
+        class Tree3D {
+            constructor() {
+                this.mesh = new THREE.Group();
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1), getMat(0x795548)); trunk.position.y = 0.5; trunk.castShadow = true;
+                const leaves = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2.5, 5), getMat(0x2E7D32)); leaves.position.y = 2; leaves.castShadow = true;
+                this.mesh.add(trunk, leaves);
+                
+                this.x = 20 + Math.random() * 10; // Muncul di kanan layar
+                this.z = -3 - Math.random() * 4;  // Di belakang lintasan balap
+                this.mesh.position.set(this.x, 0, this.z);
+                scene.add(this.mesh);
+            }
+            update(dt) { this.x -= gameSpeed * 0.8 * dt; this.mesh.position.x = this.x; }
+            dispose() { scene.remove(this.mesh); }
+        }
 
-        // Kelas Karakter 3D
+        // --- GAME LOGIC ---
+        let state = 'START', lastTime = 0, score = 0, gameSpeed = 12, nextObstacleTime = 0, currentStage = 1, timeElapsed = 0;
+        const GRAVITY = 50, JUMP_VELOCITY = 17, SCORE_PER_STAGE = 60;
+
         class Character3D {
             constructor(meshBuilder, zone, xPos) {
-                this.mesh = meshBuilder();
-                this.zone = zone; 
-                this.baseX = xPos;
-                
-                this.mesh.position.set(this.baseX, 1, 1); // Posisi Z=1 (Di tengah track)
-                scene.add(this.mesh);
-
-                this.y = 1; // 1 adalah tinggi di atas tanah
-                this.vy = 0; 
-                this.isJumping = false;
-                this.hitRadius = 0.8; 
+                this.mesh = meshBuilder(); this.zone = zone; this.baseX = xPos;
+                this.mesh.position.set(this.baseX, 1, 1); scene.add(this.mesh);
+                this.y = 1; this.vy = 0; this.isJumping = false; this.hitRadius = 0.8; 
             }
-            jump() { 
-                if (!this.isJumping) { 
-                    this.vy = JUMP_VELOCITY; this.isJumping = true; 
-                    playSFX('jump'); 
-                    spawnParticles3D(this.mesh.position.x, 0, this.mesh.position.z, 0xffffff); 
-                } 
-            }
+            jump() { if (!this.isJumping) { this.vy = JUMP_VELOCITY; this.isJumping = true; playSFX('jump'); spawnParticles3D(this.mesh.position.x, 0, this.mesh.position.z, 0xffffff); } }
             update(dt) {
                 if (this.isJumping) {
-                    this.vy -= GRAVITY * dt; 
-                    this.y += this.vy * dt;
-                    
-                    // Squash & Stretch di 3D
-                    this.mesh.scale.set(0.8, 1.2, 0.8);
-                    this.mesh.rotation.x -= 5 * dt; // Putaran akrobatik
-
-                    if (this.y <= 1) { // Mendarat (Karena titik tengah mesh di Y=1)
-                        this.y = 1; this.vy = 0; this.isJumping = false; 
-                        this.mesh.rotation.x = 0;
-                        spawnParticles3D(this.mesh.position.x, 0, this.mesh.position.z, 0xffffff); 
-                    }
+                    this.vy -= GRAVITY * dt; this.y += this.vy * dt;
+                    this.mesh.scale.set(0.85, 1.15, 0.85); // Stretch
+                    if (this.y <= 1) { this.y = 1; this.vy = 0; this.isJumping = false; this.mesh.scale.set(1, 1, 1); spawnParticles3D(this.mesh.position.x, 0, this.mesh.position.z, 0xffffff); }
                 } else {
                     this.y = 1;
-                    // Idle Animation (Napas/Ngambang pelan)
-                    this.mesh.scale.set(1, 1 + Math.sin(timeElapsed * 5 + this.zone) * 0.05, 1);
+                    this.mesh.scale.set(1, 1 + Math.sin(timeElapsed * 6 + this.zone) * 0.04, 1); // Napas
                 }
                 this.mesh.position.y = this.y;
             }
@@ -309,95 +270,50 @@
 
         class Obstacle3D {
             constructor() {
-                // Batu Low Poly (Dodecahedron)
-                this.mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8, 0), getMat(0x607D8B));
-                this.mesh.castShadow = true;
-                
-                this.x = 15; // Muncul jauh di kanan
-                this.mesh.position.set(this.x, 0.8, 1);
-                scene.add(this.mesh);
-                
-                this.hitRadius = 0.7; 
-                this.passedBy = []; 
+                // Batu bertekstur
+                this.mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8, 1), getTexMat(texRock)); this.mesh.castShadow = true;
+                this.x = 20; this.mesh.position.set(this.x, 0.6, 1); scene.add(this.mesh);
+                this.hitRadius = 0.75; this.passedBy = []; 
             }
-            update(dt) { 
-                this.x -= gameSpeed * dt; 
-                this.mesh.position.x = this.x;
-                this.mesh.rotation.z += (gameSpeed * dt) / 0.8; // Menggelinding ke kiri
-            }
-            dispose() {
-                scene.remove(this.mesh);
-                this.mesh.geometry.dispose();
-                this.mesh.material.dispose();
-            }
+            update(dt) { this.x -= gameSpeed * dt; this.mesh.position.x = this.x; this.mesh.rotation.z += (gameSpeed * dt) / 0.8; }
+            dispose() { scene.remove(this.mesh); this.mesh.geometry.dispose(); }
         }
 
-        // Particle System 3D
-        let particles3D = [];
-        const partGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+        let particles3D = [], trees = [];
+        const partGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
         function spawnParticles3D(x, y, z, color) {
             const mat = new THREE.MeshBasicMaterial({ color: color });
-            for(let i=0; i<6; i++) {
+            for(let i=0; i<8; i++) {
                 const p = new THREE.Mesh(partGeo, mat);
                 p.position.set(x + (Math.random()-0.5), y + Math.random(), z + (Math.random()-0.5));
-                p.userData = {
-                    vx: (Math.random() - 0.5) * 5 - (gameSpeed * 0.2), // Tertiup ke kiri
-                    vy: Math.random() * 8,
-                    vz: (Math.random() - 0.5) * 5,
-                    life: 1.0
-                };
-                scene.add(p);
-                particles3D.push(p);
+                p.userData = { vx: (Math.random() - 0.5) * 6 - (gameSpeed * 0.3), vy: Math.random() * 8 + 2, vz: (Math.random() - 0.5) * 6, life: 1.0 };
+                scene.add(p); particles3D.push(p);
             }
         }
 
         function createFloatingTextHTML(text, htmlX, htmlY) {
-            const container = document.getElementById('floating-text-container');
-            const el = document.createElement('div');
-            el.className = 'floating-text';
-            el.innerText = text;
-            el.style.left = htmlX + 'px';
-            el.style.top = htmlY + 'px';
-            container.appendChild(el);
-            
-            // Animasi CSS murni untuk pop-up
-            setTimeout(() => {
-                el.style.transform = 'translateY(-50px) scale(1.5)';
-                el.style.opacity = '0';
-            }, 10);
-            
+            const container = document.getElementById('floating-text-container'); const el = document.createElement('div');
+            el.className = 'floating-text'; el.innerText = text; el.style.left = htmlX + 'px'; el.style.top = htmlY + 'px'; container.appendChild(el);
+            setTimeout(() => { el.style.transform = 'translateY(-60px) scale(1.5)'; el.style.opacity = '0'; }, 10);
             setTimeout(() => { el.remove(); }, 800);
         }
 
         let characters = [], obstacles = [];
-        
-        window.addEventListener('resize', () => {
-            cw = container.clientWidth; ch = container.clientHeight;
-            renderer.setSize(cw, ch);
-            camera.aspect = cw / ch;
-            camera.updateProjectionMatrix();
-        });
+        window.addEventListener('resize', () => { cw = container.clientWidth; ch = container.clientHeight; renderer.setSize(cw, ch); camera.aspect = cw / ch; camera.updateProjectionMatrix(); });
 
-        // --- MAIN LOOP ---
         function init() {
-            // Bersihkan scene lama jika ada
             obstacles.forEach(o => o.dispose()); obstacles = [];
-            particles3D.forEach(p => { scene.remove(p); p.geometry.dispose(); p.material.dispose(); }); particles3D = [];
+            trees.forEach(t => t.dispose()); trees = [];
+            particles3D.forEach(p => { scene.remove(p); p.material.dispose(); }); particles3D = [];
             characters.forEach(c => { scene.remove(c.mesh); }); characters = [];
             
-            // Susunan karakter di kiri (Jarak persis seperti di gambar 2D)
-            characters = [
-                new Character3D(createOrange3D, 0, -5),  // Kiri
-                new Character3D(createCorn3D, 1, -2),    // Tengah Kiri
-                new Character3D(createCarrot3D, 2, 1)    // Tengah Kanan
-            ];
+            characters = [ new Character3D(createOrange3D, 0, -5), new Character3D(createCorn3D, 1, -2.5), new Character3D(createCarrot3D, 2, 0) ];
             
-            score = 0; currentStage = 1; 
-            gameSpeed = 12; // Kecepatan awal
-            document.getElementById('scoreDisplay').innerText = `🪙 0`; 
-            document.getElementById('stageDisplay').innerText = `STAGE 1`;
-            scene.background.setHex(0x87CEEB); scene.fog.color.setHex(0x87CEEB); // Reset warna siang
-            nextObstacleTime = 1.5; // dalam detik
+            // Spawn Pohon awal
+            for(let i=0; i<3; i++) { let t = new Tree3D(); t.x = Math.random() * 20 - 10; trees.push(t); }
+
+            score = 0; currentStage = 1; gameSpeed = 12; document.getElementById('scoreDisplay').innerText = `🪙 0`; document.getElementById('stageDisplay').innerText = `STAGE 1`;
+            scene.background.setHex(0x87CEEB); scene.fog.color.setHex(0x87CEEB); nextObstacleTime = 1.5;
         }
 
         function startGame() {
@@ -408,103 +324,71 @@
 
         function gameOver() {
             state = 'GAMEOVER'; playSFX('hit'); bgm.pause();
-            
-            // Efek hancur
             characters.forEach(c => spawnParticles3D(c.mesh.position.x, c.mesh.position.y, c.mesh.position.z, 0xff0000));
-            
             document.getElementById('ui-hud').style.display = 'none'; document.getElementById('ui-gameover').classList.remove('hidden'); document.getElementById('finalScore').innerText = score;
         }
 
         function gameLoop(timestamp) {
-            if (state !== 'PLAY') return; 
-            let dt = (timestamp - lastTime) / 1000; if (dt > 0.1) dt = 0.1; lastTime = timestamp; timeElapsed += dt;
-            update(dt); 
-            renderer.render(scene, camera); 
-            requestAnimationFrame(gameLoop);
+            if (state !== 'PLAY') return; let dt = (timestamp - lastTime) / 1000; if (dt > 0.1) dt = 0.1; lastTime = timestamp; timeElapsed += dt;
+            update(dt); renderer.render(scene, camera); requestAnimationFrame(gameLoop);
         }
 
         function update(dt) {
-            gameSpeed += dt * 0.2; // Tambah cepat
+            gameSpeed += dt * 0.2; 
             
-            // Animasi Lingkungan (Pola garis track jalan)
-            track.material.map && (track.material.map.offset.y -= gameSpeed * dt * 0.1);
-            mountains.position.x -= (gameSpeed * 0.1) * dt;
-            if(mountains.position.x < -10) mountains.position.x = 0;
+            // Animasi Lingkungan (Tekstur tanah berjalan)
+            texGrass.offset.x += (gameSpeed * 0.05) * dt;
+            stripe.position.x -= gameSpeed * dt; if (stripe.position.x < -10) stripe.position.x = 0;
+            mountains.position.x -= (gameSpeed * 0.1) * dt; if(mountains.position.x < -14) mountains.position.x = 0;
 
-            // Stage Check
+            // Update Pohon
+            if (Math.random() < 0.015) trees.push(new Tree3D());
+            for (let i = trees.length - 1; i >= 0; i--) { trees[i].update(dt); if (trees[i].x < -15) { trees[i].dispose(); trees.splice(i, 1); } }
+
             let targetStage = Math.floor(score / SCORE_PER_STAGE) + 1;
             if (targetStage > currentStage) {
-                currentStage = targetStage; playSFX('stageUp'); gameSpeed += 1.5;
-                document.getElementById('stageDisplay').innerText = `STAGE ${currentStage}`;
-                
-                // Ubah Warna Langit Berdasarkan Stage
-                const colors = [0x87CEEB, 0xFFB74D, 0xBA68C8, 0x283593, 0xb71c1c];
-                let cHex = colors[Math.min(currentStage - 1, colors.length - 1)];
-                scene.background.setHex(cHex); scene.fog.color.setHex(cHex);
+                currentStage = targetStage; playSFX('stageUp'); gameSpeed += 1.5; document.getElementById('stageDisplay').innerText = `STAGE ${currentStage}`;
+                const colors = [0x87CEEB, 0xFFB74D, 0xBA68C8, 0x1A237E, 0xb71c1c];
+                let cHex = colors[Math.min(currentStage - 1, colors.length - 1)]; scene.background.setHex(cHex); scene.fog.color.setHex(cHex);
             }
 
-            // Updates Characters
             characters.forEach(char => char.update(dt));
             
-            // Update 3D Particles
             for (let i = particles3D.length - 1; i >= 0; i--) { 
-                let p = particles3D[i];
-                p.position.x += p.userData.vx * dt;
-                p.position.y += p.userData.vy * dt;
-                p.position.z += p.userData.vz * dt;
-                p.userData.vy -= GRAVITY * 0.5 * dt; // Gravitasi partikel
-                p.userData.life -= dt * 2;
-                p.scale.setScalar(Math.max(0, p.userData.life)); // Makin kecil
-                if (p.userData.life <= 0) {
-                    scene.remove(p); p.material.dispose(); particles3D.splice(i, 1);
-                }
+                let p = particles3D[i]; p.position.x += p.userData.vx * dt; p.position.y += p.userData.vy * dt; p.position.z += p.userData.vz * dt; p.userData.vy -= GRAVITY * 0.5 * dt; p.userData.life -= dt * 2.5; p.scale.setScalar(Math.max(0, p.userData.life));
+                if (p.userData.life <= 0) { scene.remove(p); p.material.dispose(); particles3D.splice(i, 1); }
             }
 
-            // Spawner
             nextObstacleTime -= dt;
             if (nextObstacleTime <= 0) {
-                obstacles.push(new Obstacle3D());
-                let baseWait = Math.max(0.8, 1.5 - (currentStage * 0.1)); 
-                nextObstacleTime = (Math.random() * 0.5) + baseWait; 
+                obstacles.push(new Obstacle3D()); let baseWait = Math.max(0.9, 1.6 - (currentStage * 0.1)); nextObstacleTime = (Math.random() * 0.4) + baseWait; 
             }
 
-            // Hit Detection & Scoring
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i]; obs.update(dt);
-                
                 characters.forEach((char, index) => {
-                    // Jarak 3D
                     let dist = char.mesh.position.distanceTo(obs.mesh.position);
-                    
                     if (dist < char.hitRadius + obs.hitRadius) gameOver();
                     
                     if (obs.x < char.baseX && !obs.passedBy.includes(index)) {
                         obs.passedBy.push(index); score += 5; document.getElementById('scoreDisplay').innerText = `🪙 ${score}`;
                         if (obs.passedBy.length === 1) {
                             playSFX('score');
-                            // Proyeksi koordinat 3D ke 2D Layar HTML untuk Floating Text
-                            let pos = char.mesh.position.clone(); pos.y += 2;
-                            pos.project(camera);
-                            let xScreen = (pos.x * .5 + .5) * cw;
-                            let yScreen = (pos.y * -.5 + .5) * ch;
-                            createFloatingTextHTML("+15", xScreen, yScreen);
+                            let pos = char.mesh.position.clone(); pos.y += 2; pos.project(camera);
+                            createFloatingTextHTML("+15", (pos.x * .5 + .5) * cw, (pos.y * -.5 + .5) * ch);
                         }
                     }
                 });
-                
                 if (obs.x < -15) { obs.dispose(); obstacles.splice(i, 1); }
             }
         }
 
-        // --- CONTROLS ---
         const btns = [{ el: document.getElementById('btn-orange'), id: 0 }, { el: document.getElementById('btn-corn'), id: 1 }, { el: document.getElementById('btn-carrot'), id: 2 }];
         btns.forEach(btn => {
             btn.el.addEventListener('touchstart', (e) => { e.preventDefault(); btn.el.classList.add('active-touch'); if (state === 'PLAY') characters[btn.id].jump(); }, {passive: false});
             btn.el.addEventListener('touchend', (e) => { e.preventDefault(); btn.el.classList.remove('active-touch'); });
             btn.el.addEventListener('mousedown', (e) => { if (state === 'PLAY') characters[btn.id].jump(); });
         });
-        
-        // Render pertama kali
         renderer.render(scene, camera); 
     </script>
 </body>
